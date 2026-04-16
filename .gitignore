@@ -1,0 +1,6 @@
+raw_datasets/
+processed_datasets/
+*.csv
+*.txt
+*.zip
+__pycache__/
