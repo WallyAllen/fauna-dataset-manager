@@ -1,6 +1,8 @@
 from pathlib import Path
 from datetime import datetime
 import csv
+import pycountry
+
 # Funcion para abrir el archivo con el path enviado
 def evaluar_error(valor,nombreColumna):
     error = False
@@ -13,7 +15,7 @@ def evaluar_error(valor,nombreColumna):
             error = True
     return error
 # 3.A
-def validar_coordenadas(path,nombreColumna,delimitador):
+def validar_coordenadas(nombreColumna,path,delimitador):
     cant_inv = 0
     list_inv = []
     colum_vacio = True
@@ -79,6 +81,7 @@ def constatar_coordenadas(primer_colum,segunda_colum,path,delimitador):
             if colum_vacia: print("Las columnas enviadas no poseen datos")
     return
 
+#3.C
 def validar_fechas(nombre_columna,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     anio_post = 0
@@ -135,6 +138,28 @@ def verificar_duplicados(nombre_columna,path,delimitador):
                 set_id.add(fila[nombre_columna])
 
     return cant_dupli, duplicados
+
+#3.E
+def verificar_countryCode(nombre_columna,path,delimitador):
+    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
+    colum_vacia = True
+    duplicados = []
+    cant_dupli = 0
+    set_id = set()
+
+    print("Evaluando registros repetidos del dataset...")
+
+    with open(path, "r") as file:
+        try:
+            csv_reader = csv.DictReader(file,delimiter = delimitador)
+        except TypeError:
+            print("Ingrese un delimitador valido")
+
+        if nombre_columna not in csv_reader.fieldnames:
+            print(f"La columna {nombre_columna} no existe en el dataset")
+            return
+        for fila in csv_reader:
+
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
     lista = []
