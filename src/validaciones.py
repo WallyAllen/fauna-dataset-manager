@@ -62,7 +62,7 @@ def validar_coordenadas(dataset,path,delimitador):
     print("Buscando errores en los datos de latitud...")
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     if dataset not in TRADUCTOR_DATASETS.keys():
-            print(f"La columna {nombreColumna} no existe en el dataset")
+            print(f"El dataset {dataset} no existe")
             return cant_inv, list_inv
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
     
@@ -94,7 +94,7 @@ def constatar_coordenadas(dataset,path,delimitador):
     colum_vacia = True
     print("Evaluando inconsistencias en las coordenadas...")
     if dataset not in TRADUCTOR_DATASETS.keys():
-            print(f"La columna {nombreColumna} no existe en el dataset")
+            print(f"El dataset {dataset} no existe")
             return
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
@@ -115,12 +115,16 @@ def constatar_coordenadas(dataset,path,delimitador):
     return
 
 #3.C
-def validar_fechas(nombre_columna,path,delimitador):
+def validar_fechas(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     anio_post = 0
     cant = 0
     colum_vacia = True
     print("Evaluando fechas del dataset...")
+    if dataset not in TRADUCTOR_DATASETS.keys():
+            print(f"El dataset {dataset} no existe")
+            return
+    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
     with open(path, "r") as file:
         try:
@@ -128,14 +132,10 @@ def validar_fechas(nombre_columna,path,delimitador):
         except TypeError:
             print("Ingrese un delimitador valido")
 
-        if nombre_columna not in csv_reader.fieldnames:
-            print(f"La columna {nombre_columna} no existe en el dataset")
-            return
-
         for fila in csv_reader:
             try:
                 #convierte el string formate ISO en un dato tipo datetime
-                fecha = datetime.fromisoformat(fila[nombre_columna])
+                fecha = datetime.fromisoformat(fila[colum_dataset["fecha"]])
                 if fecha.year > 2026: anio_post += 1
             #Si la fecha no concuerda con el formate ISO significa que es una fecha invalida
             except (ValueError,TypeError):
@@ -145,7 +145,7 @@ def validar_fechas(nombre_columna,path,delimitador):
     return anio_post
 
 #3.D
-def verificar_duplicados(nombre_columna,path,delimitador):
+def verificar_duplicados(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     colum_vacia = True
     duplicados = []
@@ -153,6 +153,10 @@ def verificar_duplicados(nombre_columna,path,delimitador):
     set_id = set()
 
     print("Evaluando registros repetidos del dataset...")
+    if dataset not in TRADUCTOR_DATASETS.keys():
+            print(f"El dataset {dataset} no existe")
+            return
+    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
     with open(path, "r") as file:
         try:
@@ -160,37 +164,34 @@ def verificar_duplicados(nombre_columna,path,delimitador):
         except TypeError:
             print("Ingrese un delimitador valido")
 
-        if nombre_columna not in csv_reader.fieldnames:
-            print(f"La columna {nombre_columna} no existe en el dataset")
-            return
         for fila in csv_reader:
-            if fila[nombre_columna] in set_id:
-                duplicados.append(fila[nombre_columna])
+            if fila[colum_dataset["id"]] in set_id:
+                duplicados.append(fila[colum_dataset["id"]])
                 cant_dupli += 1
             else:
-                set_id.add(fila[nombre_columna]) 
+                set_id.add(fila[colum_dataset["id"]]) 
     return cant_dupli, duplicados
 
 #3.E
-def verificar_countryCode(nombre_columna,path,delimitador):
+def verificar_countryCode(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     colum_vacia = True
 
     print("Evaluando errores en el campo 'countryCode' del dataset...")
-
+    if dataset not in TRADUCTOR_DATASETS.keys():
+            print(f"El dataset {dataset} no existe")
+            return
+    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
     with open(path, "r") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
         except TypeError:
             print("Ingrese un delimitador valido")
 
-        if nombre_columna not in csv_reader.fieldnames:
-            print(f"La columna {nombre_columna} no existe en el dataset")
-            return
         for fila in csv_reader:
-            pais = pycountry.countries.get(alpha_2=fila[nombre_columna])
+            pais = pycountry.countries.get(alpha_2=fila[colum_dataset["pais"]])
             if pais == None:
-                print(f"El codigo {fila[nombre_columna]} no es valido")
+                print(f"El codigo {fila[colum_dataset["pais"]} no es valido")
     return
 
 #3.F
