@@ -20,8 +20,11 @@ def validar_coordenadas(path,nombreColumna,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
 
     with open(path, "r") as file:
-        csv_reader = csv.DictReader(file,delimiter = delimitador)
-
+        try:
+            csv_reader = csv.DictReader(file,delimiter = delimitador)
+        except TypeError:
+            print("Ingrese un delimitador valido")
+            return cant_inv, list_inv
         if nombreColumna not in csv_reader.fieldnames:
             print(f"La columna {nombreColumna} no existe en el dataset")
             return cant_inv, list_inv
@@ -35,6 +38,7 @@ def validar_coordenadas(path,nombreColumna,delimitador):
                 # Utilizo el try/except para valores que no son numeros
                 try:
                     coord = float(valor)
+                    # La funcion evaluar_error devuelve True si encuentra un error
                     if evaluar_error(coord,nombreColumna):
                         cant_inv += 1
                         list_inv.append(coord)
@@ -47,7 +51,33 @@ def validar_coordenadas(path,nombreColumna,delimitador):
     return cant_inv, list_inv
 
 #3.B
-#def constatar_coordenadas()
+def constatar_coordenadas(primer_colum,segunda_colum,path,delimitador):
+    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
+    colum_vacia = True
+    print("Evaluando inconsistencias en las coordenadas...")
+    with open(path, "r") as file:
+        try:
+            csv_reader = csv.DictReader(file,delimiter = delimitador)
+        except TypeError:
+            print("Ingrese un delimitador valido")
+
+        if primer_colum not in csv_reader.fieldnames:
+            print(f"La columna {primer_colum} no existe en el dataset")
+            return
+        elif segunda_colum not in csv_reader.fieldnames:
+            print(f"La columna {segunda_colum} no existe en el dataset")
+            return
+
+        for fila in csv_reader:
+            if  fila[primer_colum] == '' and fila[segunda_colum] == '':
+                pass
+                #print(f"Existe una inconsistencia en ambos registros -- linea {csv_reader.line_num} ")
+            elif fila[primer_colum] == '' or fila[segunda_colum] == '':
+                colum_vacia = False
+                #print(f"Existe una inconsistencia en un registro -- linea {csv_reader.line_num}")
+            if colum_vacia: print("Las columnas enviadas no poseen datos")
+    return
+
 
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
@@ -64,5 +94,8 @@ if __name__ == "__main__":
     print(f"La cantidad de registro invalidos son {cant}")
     for i in range(len(lista)):
         print(f"Los registros invalidos son {lista[i]}")
-
+    dato1 = input('Ingrese la primer columna:')
+    dato2 = input('Ingrese la segunda columna:')
+    delimitador = input('Ingrese el delimitador del dataset:')
+    constatar_coordenadas(dato1, dato2,file_route,delimitador)
 
