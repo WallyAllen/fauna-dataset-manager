@@ -2,7 +2,38 @@ from pathlib import Path
 from datetime import datetime
 import csv
 import pycountry
+TRADUCTOR_DATASETS ={
+    'aidiza': {
+        'latitud' : 'decimalLatitude',
+        'longitud' : 'decimalLongitude',
+        'fecha' : 'eventDate',
+        'id' : 'gbifID',
+        'pais' : 'countryCode',
+        'coordenada_rango' : '',
+        'taxonomica' : ['scientificName','kingdom','phylum',
+                        'class','order','family','genus',
+                        'specificEpithet','taxonRank']
+    }
+    'inaturalist': {
+        'latitud' :
+        'longitud' :
+        'fecha' :
+        'id' :
+        'pais' : 
+        'coordenada_rango' :
+        'taxonomica' :
+    }
+    'xenocanto' : {
+        'latitud' :
+        'longitud' :
+        'fecha' :
+        'id' :
+        'pais' : 
+        'coordenada_rango' :
+        'taxonomica' :
+    }
 
+}
 # Funcion para abrir el archivo con el path enviado
 def evaluar_error(valor,nombreColumna):
     error = False
@@ -160,6 +191,7 @@ def verificar_countryCode(nombre_columna,path,delimitador):
                 print(f"El codigo {fila[nombre_columna]} no es valido")
     return
 
+#3.F
 def verificar_incertidumbre(nombre_columna,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     colum_vacia = True
@@ -186,6 +218,7 @@ def verificar_incertidumbre(nombre_columna,path,delimitador):
                 print(f"El dato {fila[nombre_columna]} no es un dato numerico")
     return
 
+#3.G
 
 #Bloque para pr las funciones de validacion
 if __name__ == "__main__":
