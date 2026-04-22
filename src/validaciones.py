@@ -108,6 +108,32 @@ def validar_fechas(nombre_columna,path,delimitador):
         print(F"La cantidad de fechas invalidas son {cant}")
     return anio_post
 
+#3.D
+def verificar_duplicados(nombre_columna,path,delimitador)
+    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
+    colum_vacia = True
+    duplicados = []
+    cant_dupli = 0
+    set_id = 0
+    print("Evaluando registros repetidos del dataset...")
+
+    with open(path, "r") as file:
+        try:
+            csv_reader = csv.DictReader(file,delimiter = delimitador)
+        except TypeError:
+            print("Ingrese un delimitador valido")
+
+        if nombre_columna not in csv_reader.fieldnames:
+            print(f"La columna {nombre_columna} no existe en el dataset")
+            return
+        for fila in csv_reader:
+            set_id = set(csv_reader[nombre_columna])
+            if rango_set < len(set_id):
+                rango_set = len(set_id)
+            elif:
+                duplicados.append(csv_reader[nombre_columna])
+                cant_dupli += 1
+    return cant_dupli, duplicados
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
     list = []
