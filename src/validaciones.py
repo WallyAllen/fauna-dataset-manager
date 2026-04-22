@@ -109,12 +109,13 @@ def validar_fechas(nombre_columna,path,delimitador):
     return anio_post
 
 #3.D
-def verificar_duplicados(nombre_columna,path,delimitador)
+def verificar_duplicados(nombre_columna,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     colum_vacia = True
     duplicados = []
     cant_dupli = 0
-    set_id = 0
+    set_id = set()
+
     print("Evaluando registros repetidos del dataset...")
 
     with open(path, "r") as file:
@@ -127,16 +128,16 @@ def verificar_duplicados(nombre_columna,path,delimitador)
             print(f"La columna {nombre_columna} no existe en el dataset")
             return
         for fila in csv_reader:
-            set_id = set(csv_reader[nombre_columna])
-            if rango_set < len(set_id):
-                rango_set = len(set_id)
-            elif:
-                duplicados.append(csv_reader[nombre_columna])
+            if fila[nombre_columna] in set_id:
+                duplicados.append(fila[nombre_columna])
                 cant_dupli += 1
+            else:
+                set_id.add(fila[nombre_columna])
+
     return cant_dupli, duplicados
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
-    list = []
+    lista = []
     cant = 0
     #Creo una variable con la ruta de archivo dinamica
     DIC_BASE = Path(__file__).resolve().parent.parent
@@ -154,9 +155,17 @@ if __name__ == "__main__":
     dato2 = input('Ingrese la segunda columna:')
     delimitador = input('Ingrese el delimitador del dataset:')
     constatar_coordenadas(dato1, dato2,file_route,delimitador)
-    """
+    
 
     dato = input('Ingrese que columna quiere verificar:')
     delimitador = input('Ingrese el delimitador del dataset:')
     cant = validar_fechas(dato,file_route,delimitador)
     print(f"La cantidad de fechas posteriores a 2026 son:{cant}")
+    """
+    dato = input('Ingrese que columna quiere verificar:')
+    delimitador = input('Ingrese el delimitador del dataset:')
+    cant,lista = verificar_duplicados(dato,file_route,delimitador)
+    for i in range(len(lista)):
+        print(f"Los IDS duplicados son :{lista[i]}")
+    print(f"La cantidad de datos duplicados son :{cant}")
+
