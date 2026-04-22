@@ -13,18 +13,18 @@ TRADUCTOR_DATASETS ={
         'taxonomica' : ['scientificName','kingdom','phylum',
                         'class','order','family','genus',
                         'specificEpithet','taxonRank'] 
-    }
+    },
     'inaturalist': {
         'latitud' : 'decimalLatitude',
         'longitud' : 'decimalLongitude',
         'fecha' : 'eventDate',
         'id' : 'id',
         'pais' : 'countryCode',
-        'coordenada_rango' : 'coordinateUncertainyInMeters',
+        'coordenada_rango' : 'coordinateUncertaintyInMeters',
         'taxonomica' : ['scientificName','taxonID',
                         'taxonRank','kingdom','phylum',
                         'class','order','family','genus']
-    }
+    },
     'xenocanto' : {
         'latitud' : 'latitudeDecimal',
         'longitud' : 'longitudeDecimal',
@@ -43,7 +43,7 @@ TRADUCTOR_DATASETS ={
 # Funcion para abrir el archivo con el path enviado
 def evaluar_error(valor,parametro_neg,parametro_pos):
     error = False
-    if valor_lat != '':
+    if valor != '':
                 colum_vacia = False
                 # Utilizo el try/except para valores que no son numeros
                 try:
@@ -58,7 +58,7 @@ def evaluar_error(valor,parametro_neg,parametro_pos):
 def validar_coordenadas(dataset,path,delimitador):
     cant_inv = 0
     list_inv = []
-    colum_vacio = True
+    colum_vacia = True
     print("Buscando errores en los datos de latitud...")
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     if dataset not in TRADUCTOR_DATASETS.keys():
@@ -79,9 +79,11 @@ def validar_coordenadas(dataset,path,delimitador):
             valor_lat = fila[colum_dataset["latitud"]]
             valor_lon = fila[colum_dataset["longitud"]]
             if evaluar_error(valor_lat, -90, 90):
+                colum_vacia = False
                 cant_inv += 1
                 list_inv.append(valor_lat)
             if evaluar_error(valor_lon, -180, 180):
+                colum_vacia = False
                 cant_inv += 1
                 list_inv.append(valor_lon)
     if colum_vacia:
@@ -107,11 +109,12 @@ def constatar_coordenadas(dataset,path,delimitador):
         for fila in csv_reader:
             if  fila[colum_dataset["latitud"]] == '' and fila[colum_dataset["longitud"]] == '':
                 pass
-                #print(f"Existe una inconsistencia en ambos registros -- linea {csv_reader.line_num} ")
+                colum_vacia = False
+                print(f"Existe una inconsistencia en ambos registros -- linea {csv_reader.line_num} ")
             elif fila[colum_dataset["latitud"]] == '' or fila[colum_dataset["longitud"]] == '':
                 colum_vacia = False
-                #print(f"Existe una inconsistencia en un registro -- linea {csv_reader.line_num}")
-            if colum_vacia: print("Las columnas enviadas no poseen datos")
+                print(f"Existe una inconsistencia en un registro -- linea {csv_reader.line_num}")
+        if colum_vacia: print("No existen inconsistencia en las columnas")
     return
 
 #3.C
@@ -155,7 +158,7 @@ def verificar_duplicados(dataset,path,delimitador):
     print("Evaluando registros repetidos del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
-            return
+            return cant_dupli, duplicados
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
     with open(path, "r") as file:
@@ -191,42 +194,42 @@ def verificar_countryCode(dataset,path,delimitador):
         for fila in csv_reader:
             pais = pycountry.countries.get(alpha_2=fila[colum_dataset["pais"]])
             if pais == None:
-                print(f"El codigo {fila[colum_dataset["pais"]} no es valido")
+                print(f"El codigo {fila[colum_dataset["pais"]]} no es valido")
     return
 
 #3.F
-def verificar_incertidumbre(nombre_columna,path,delimitador):
+def verificar_incertidumbre(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     colum_vacia = True
 
     print("Evaluando errores en el campo 'coordinateUncertainyInMeters' del dataset...")
-
+    if dataset not in TRADUCTOR_DATASETS.keys():
+            print(f"El dataset {dataset} no existe")
+            return
+    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
     with open(path, "r") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
         except TypeError:
             print("Ingrese un delimitador valido")
 
-        if nombre_columna not in csv_reader.fieldnames:
-            print(f"La columna {nombre_columna} no existe en el dataset")
-            return
         for fila in csv_reader:
             try:
-                rango = float(fila[nombre_columna])
+                rango = float(fila[colum_dataset["coordenada_rango"]])
                 if rango < 0: 
                     print(f"El valor {rango} no es valido")
                 elif rango > 100:
                     print(f"El valor {rango} no es valido")
             except ValueError:
-                print(f"El dato {fila[nombre_columna]} no es un dato numerico")
+                print(f"El dato {fila[colum_dataset["coordenada_rango"]]} no es un dato numerico")
     return
 
 #3.G
 
-#Bloque para pr las funciones de validacion
+#Bloque para probar las funciones de validacion
 if __name__ == "__main__":
     def datos(dato,delimitador):
-        dato = input('Ingrese que columna quiere verificar:')
+        dato = input('Ingrese que dataset quiere verificar (aidiza - inaturalist - xenocanto):')
         delimitador = input('Ingrese el delimitador del dataset:')
         return dato,delimitador
 
@@ -239,16 +242,14 @@ if __name__ == "__main__":
 
     file_route = DIC_BASE / 'raw_datasets' / 'inaturalist-filtered' / 'observations.csv'
     dato, delimitador = datos(dato,delimitador)
-    """
-    cant, lista = validar_coordenadas(file_route,dato,delimitador)
+    
+    cant, lista = validar_coordenadas(dato,file_route,delimitador)
     print(f"La cantidad de registro invalidos son {cant}")
     for i in range(len(lista)):
         print(f"Los registros invalidos son {lista[i]}")
 
-    dato1 = input('Ingrese la primer columna:')
-    dato2 = input('Ingrese la segunda columna:')
-    delimitador = input('Ingrese el delimitador del dataset:')
-    constatar_coordenadas(dato1, dato2,file_route,delimitador)
+    
+    constatar_coordenadas(dato,file_route,delimitador)
 
     cant = validar_fechas(dato,file_route,delimitador)
     print(f"La cantidad de fechas posteriores a 2026 son:{cant}")
@@ -259,5 +260,5 @@ if __name__ == "__main__":
     print(f"La cantidad de datos duplicados son :{cant}")
 
     verificar_countryCode(dato,file_route,delimitador)
-    """
+
     verificar_incertidumbre(dato,file_route,delimitador)
