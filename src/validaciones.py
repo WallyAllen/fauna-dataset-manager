@@ -143,7 +143,7 @@ def verificar_countryCode(nombre_columna,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     colum_vacia = True
 
-    print("Evaluando errores del campo 'countryCode' del dataset...")
+    print("Evaluando errores en el campo 'countryCode' del dataset...")
 
     with open(path, "r") as file:
         try:
@@ -157,8 +157,26 @@ def verificar_countryCode(nombre_columna,path,delimitador):
         for fila in csv_reader:
             pais = pycountry.countries.get(alpha_2=fila[nombre_columna])
             if pais == None:
-                print(f"El codigo {fila[nombre_columna]} no es valida")
+                print(f"El codigo {fila[nombre_columna]} no es valido")
     return
+
+def verificar_incertidumbre(nombre_columna,path,delimitador):
+    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
+    colum_vacia = True
+
+    print("Evaluando errores en el campo 'coordinateUncertainyInMeters' del dataset...")
+
+    with open(path, "r") as file:
+        try:
+            csv_reader = csv.DictReader(file,delimiter = delimitador)
+        except TypeError:
+            print("Ingrese un delimitador valido")
+
+        if nombre_columna not in csv_reader.fieldnames:
+            print(f"La columna {nombre_columna} no existe en el dataset")
+            return
+        for fila in csv_reader:
+
 #Bloque para pr las funciones de validacion
 if __name__ == "__main__":
     def datos(dato,delimitador):
