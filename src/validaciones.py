@@ -41,78 +41,74 @@ TRADUCTOR_DATASETS ={
 
 }
 # Funcion para abrir el archivo con el path enviado
-def evaluar_error(valor,nombreColumna):
+def evaluar_error(valor,parametro_neg,parametro_pos):
     error = False
-
-    if 'latitude' in nombreColumna:
-        if valor < -90 or valor > 90:
-            error = True
-    if 'longitude' in nombreColumna:
-        if valor < -180 or valor > 180:
-            error = True
-    return error
-# 3.A
-def validar_coordenadas(nombreColumna,path,delimitador):
-    cant_inv = 0
-    list_inv = []
-    colum_vacio = True
-    print("Buscando errores en los datos de latitud...")
-    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
-
-    with open(path, "r") as file:
-        try:
-            csv_reader = csv.DictReader(file,delimiter = delimitador)
-        except TypeError:
-            print("Ingrese un delimitador valido")
-            return cant_inv, list_inv
-        if nombreColumna not in csv_reader.fieldnames:
-            print(f"La columna {nombreColumna} no existe en el dataset")
-            return cant_inv, list_inv
-
-        # Recorre la columna enviada para buscar errores
-        for fila in csv_reader:
-        # Evaluo si existe un valor en ese registro
-            valor = fila[nombreColumna]
-            if valor != '':
+    if valor_lat != '':
                 colum_vacia = False
                 # Utilizo el try/except para valores que no son numeros
                 try:
                     coord = float(valor)
                     # La funcion evaluar_error devuelve True si encuentra un error
-                    if evaluar_error(coord,nombreColumna):
-                        cant_inv += 1
-                        list_inv.append(coord)
+                    if coord < parametro_neg or coord > parametro_pos:
+                        error = True
                 except (ValueError, TypeError):
-                    cant_inv += 1
-                    list_inv.append(valor)
-
+                    error = True
+    return error
+# 3.A
+def validar_coordenadas(dataset,path,delimitador):
+    cant_inv = 0
+    list_inv = []
+    colum_vacio = True
+    print("Buscando errores en los datos de latitud...")
+    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
+    if dataset not in TRADUCTOR_DATASETS.keys():
+            print(f"La columna {nombreColumna} no existe en el dataset")
+            return cant_inv, list_inv
+    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+    
+    with open(path, "r") as file:
+        try:
+            csv_reader = csv.DictReader(file,delimiter = delimitador)
+        except TypeError:
+            print("Ingrese un delimitador valido")
+            return cant_inv, list_inv
+       
+        # Recorre la columna enviada para buscar errores
+        for fila in csv_reader:
+        # Evaluo si existe un valor en ese registro
+            valor_lat = fila[colum_dataset["latitud"]]
+            valor_lon = fila[colum_dataset["longitud"]]
+            if evaluar_error(valor_lat, -90, 90):
+                cant_inv += 1
+                list_inv.append(valor_lat)
+            if evaluar_error(valor_lon, -180, 180):
+                cant_inv += 1
+                list_inv.append(valor_lon)
     if colum_vacia:
         print("No existen valores en la columna o la columna enviada en invalida")
     return cant_inv, list_inv
 
 #3.B
-def constatar_coordenadas(primer_colum,segunda_colum,path,delimitador):
+def constatar_coordenadas(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     colum_vacia = True
     print("Evaluando inconsistencias en las coordenadas...")
+    if dataset not in TRADUCTOR_DATASETS.keys():
+            print(f"La columna {nombreColumna} no existe en el dataset")
+            return
+    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+
     with open(path, "r") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
         except TypeError:
             print("Ingrese un delimitador valido")
 
-        if primer_colum not in csv_reader.fieldnames:
-            print(f"La columna {primer_colum} no existe en el dataset")
-            return
-        elif segunda_colum not in csv_reader.fieldnames:
-            print(f"La columna {segunda_colum} no existe en el dataset")
-            return
-
         for fila in csv_reader:
-            if  fila[primer_colum] == '' and fila[segunda_colum] == '':
+            if  fila[colum_dataset["latitud"]] == '' and fila[colum_dataset["longitud"]] == '':
                 pass
                 #print(f"Existe una inconsistencia en ambos registros -- linea {csv_reader.line_num} ")
-            elif fila[primer_colum] == '' or fila[segunda_colum] == '':
+            elif fila[colum_dataset["latitud"]] == '' or fila[colum_dataset["longitud"]] == '':
                 colum_vacia = False
                 #print(f"Existe una inconsistencia en un registro -- linea {csv_reader.line_num}")
             if colum_vacia: print("Las columnas enviadas no poseen datos")
