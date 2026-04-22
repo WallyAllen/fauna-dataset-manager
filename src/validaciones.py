@@ -178,12 +178,12 @@ def verificar_incertidumbre(nombre_columna,path,delimitador):
         for fila in csv_reader:
             try:
                 rango = float(fila[nombre_columna])
+                if rango < 0: 
+                    print(f"El valor {rango} no es valido")
+                elif rango > 100:
+                    print(f"El valor {rango} no es valido")
             except ValueError:
-                print(f"El dato {fila[nombre_columna] no es un dato numerico}")
-            if rango < 0: 
-                print(f"El valor {rango} no es valido")
-            elif rango > 100:
-                print(f"El valor {rango} no es valido")
+                print(f"El dato {fila[nombre_columna]} no es un dato numerico")
     return
 
 
@@ -193,6 +193,7 @@ if __name__ == "__main__":
         dato = input('Ingrese que columna quiere verificar:')
         delimitador = input('Ingrese el delimitador del dataset:')
         return dato,delimitador
+
     lista = []
     dato = ''
     delimitador = ''
@@ -201,8 +202,8 @@ if __name__ == "__main__":
     DIC_BASE = Path(__file__).resolve().parent.parent
 
     file_route = DIC_BASE / 'raw_datasets' / 'inaturalist-filtered' / 'observations.csv'
-    """
     dato, delimitador = datos(dato,delimitador)
+    """
     cant, lista = validar_coordenadas(file_route,dato,delimitador)
     print(f"La cantidad de registro invalidos son {cant}")
     for i in range(len(lista)):
@@ -212,17 +213,15 @@ if __name__ == "__main__":
     dato2 = input('Ingrese la segunda columna:')
     delimitador = input('Ingrese el delimitador del dataset:')
     constatar_coordenadas(dato1, dato2,file_route,delimitador)
-    
 
-    dato,delimitador = datos(dato, delimitador)
     cant = validar_fechas(dato,file_route,delimitador)
     print(f"La cantidad de fechas posteriores a 2026 son:{cant}")
-    
-    dato, delimitador = datos(dato, delimitador)
+
     cant,lista = verificar_duplicados(dato,file_route,delimitador)
     for i in range(len(lista)):
         print(f"Los IDS duplicados son :{lista[i]}")
     print(f"La cantidad de datos duplicados son :{cant}")
-    """
-    dato, delimitador = datos(dato, delimitador)
+
     verificar_countryCode(dato,file_route,delimitador)
+    """
+    verificar_incertidumbre(dato,file_route,delimitador)
