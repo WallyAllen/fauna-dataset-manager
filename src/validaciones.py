@@ -176,6 +176,12 @@ def verificar_incertidumbre(nombre_columna,path,delimitador):
             print(f"La columna {nombre_columna} no existe en el dataset")
             return
         for fila in csv_reader:
+            try:
+                rango = float(fila[nombre_columna])
+            except ValueError:
+                print(F"El dato {fila[nombre_columna] no es un dato numerico}")
+
+
 
 #Bloque para pr las funciones de validacion
 if __name__ == "__main__":
