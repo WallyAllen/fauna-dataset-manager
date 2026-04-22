@@ -135,19 +135,15 @@ def verificar_duplicados(nombre_columna,path,delimitador):
                 duplicados.append(fila[nombre_columna])
                 cant_dupli += 1
             else:
-                set_id.add(fila[nombre_columna])
-
+                set_id.add(fila[nombre_columna]) 
     return cant_dupli, duplicados
 
 #3.E
 def verificar_countryCode(nombre_columna,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     colum_vacia = True
-    duplicados = []
-    cant_dupli = 0
-    set_id = set()
 
-    print("Evaluando registros repetidos del dataset...")
+    print("Evaluando errores del campo 'countryCode' del dataset...")
 
     with open(path, "r") as file:
         try:
@@ -159,9 +155,16 @@ def verificar_countryCode(nombre_columna,path,delimitador):
             print(f"La columna {nombre_columna} no existe en el dataset")
             return
         for fila in csv_reader:
-
+            pais = pycountry.countries.get(alpha_2=fila[nombre_columna])
+            if pais == none:
+                print(F"El codigo {fila[nombre_columna] no es valida")
+    return
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
+    def datos(dato,delimitador):
+        dato = input('Ingrese que columna quiere verificar:')
+        delimitador = input('Ingrese el delimitador del dataset:')
+        return dato,delimitador
     lista = []
     cant = 0
     #Creo una variable con la ruta de archivo dinamica
@@ -169,8 +172,7 @@ if __name__ == "__main__":
 
     file_route = DIC_BASE / 'raw_datasets' / 'bird-sounds' / 'Occurrence.txt'
     """
-    dato = input('Ingrese que columna quiere verificar:')
-    delimitador = input('Ingrese el delimitador del dataset:')
+    dato, delimitador = datos(dato,delimitador)
     cant, lista = validar_coordenadas(file_route,dato,delimitador)
     print(f"La cantidad de registro invalidos son {cant}")
     for i in range(len(lista)):
@@ -182,15 +184,15 @@ if __name__ == "__main__":
     constatar_coordenadas(dato1, dato2,file_route,delimitador)
     
 
-    dato = input('Ingrese que columna quiere verificar:')
-    delimitador = input('Ingrese el delimitador del dataset:')
+    dato,delimitador = datos(dato, delimitador)
     cant = validar_fechas(dato,file_route,delimitador)
     print(f"La cantidad de fechas posteriores a 2026 son:{cant}")
-    """
-    dato = input('Ingrese que columna quiere verificar:')
-    delimitador = input('Ingrese el delimitador del dataset:')
+    
+    dato, delimitador = datos(dato, delimitador)
     cant,lista = verificar_duplicados(dato,file_route,delimitador)
     for i in range(len(lista)):
         print(f"Los IDS duplicados son :{lista[i]}")
     print(f"La cantidad de datos duplicados son :{cant}")
-
+    """
+    dato, delimitador = datos(dato, delimitador)
+    verificar_countryCode(dato,file_route,delimitador)
