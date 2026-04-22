@@ -156,21 +156,23 @@ def verificar_countryCode(nombre_columna,path,delimitador):
             return
         for fila in csv_reader:
             pais = pycountry.countries.get(alpha_2=fila[nombre_columna])
-            if pais == none:
-                print(F"El codigo {fila[nombre_columna] no es valida")
+            if pais == None:
+                print(f"El codigo {fila[nombre_columna]} no es valida")
     return
-#Bloque para probar las funciones de validacion
+#Bloque para pr las funciones de validacion
 if __name__ == "__main__":
     def datos(dato,delimitador):
         dato = input('Ingrese que columna quiere verificar:')
         delimitador = input('Ingrese el delimitador del dataset:')
         return dato,delimitador
     lista = []
+    dato = ''
+    delimitador = ''
     cant = 0
     #Creo una variable con la ruta de archivo dinamica
     DIC_BASE = Path(__file__).resolve().parent.parent
 
-    file_route = DIC_BASE / 'raw_datasets' / 'bird-sounds' / 'Occurrence.txt'
+    file_route = DIC_BASE / 'raw_datasets' / 'inaturalist-filtered' / 'observations.csv'
     """
     dato, delimitador = datos(dato,delimitador)
     cant, lista = validar_coordenadas(file_route,dato,delimitador)
