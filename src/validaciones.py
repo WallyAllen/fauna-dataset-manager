@@ -12,25 +12,31 @@ TRADUCTOR_DATASETS ={
         'coordenada_rango' : '',
         'taxonomica' : ['scientificName','kingdom','phylum',
                         'class','order','family','genus',
-                        'specificEpithet','taxonRank']
+                        'specificEpithet','taxonRank'] 
     }
     'inaturalist': {
-        'latitud' :
-        'longitud' :
-        'fecha' :
-        'id' :
-        'pais' : 
-        'coordenada_rango' :
-        'taxonomica' :
+        'latitud' : 'decimalLatitude',
+        'longitud' : 'decimalLongitude',
+        'fecha' : 'eventDate',
+        'id' : 'id',
+        'pais' : 'countryCode',
+        'coordenada_rango' : 'coordinateUncertainyInMeters',
+        'taxonomica' : ['scientificName','taxonID',
+                        'taxonRank','kingdom','phylum',
+                        'class','order','family','genus']
     }
     'xenocanto' : {
-        'latitud' :
-        'longitud' :
-        'fecha' :
-        'id' :
-        'pais' : 
-        'coordenada_rango' :
-        'taxonomica' :
+        'latitud' : 'latitudeDecimal',
+        'longitud' : 'longitudeDecimal',
+        'fecha' : 'eventDate',
+        'id' : 'id',
+        'pais' : 'country',
+        'coordenada_rango' : '',
+        'taxonomica' : ['scientificName', 'specificEpithet', 'infraspecificEpithet',
+                        'taxonRank','kingdom','phylum', 'higherClassification',
+                        'class','order','family','genus','nomenclaturaCode',
+                        'vernacularName','identificationRemarks']
+
     }
 
 }
