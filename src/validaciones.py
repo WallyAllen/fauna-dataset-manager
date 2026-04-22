@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import datetime
 import csv
 # Funcion para abrir el archivo con el path enviado
 def evaluar_error(valor,nombreColumna):
@@ -80,8 +81,11 @@ def constatar_coordenadas(primer_colum,segunda_colum,path,delimitador):
 
 def validar_fechas(nombre_columna,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
+    anio_post = 0
+    cant = 0
     colum_vacia = True
     print("Evaluando fechas del dataset...")
+
     with open(path, "r") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
@@ -91,7 +95,18 @@ def validar_fechas(nombre_columna,path,delimitador):
         if nombre_columna not in csv_reader.fieldnames:
             print(f"La columna {nombre_columna} no existe en el dataset")
             return
-    return
+
+        for fila in csv_reader:
+            try:
+                #convierte el string formate ISO en un dato tipo datetime
+                fecha = datetime.fromisoformat(fila[nombre_columna])
+                if fecha.year > 2026: anio_post += 1
+            #Si la fecha no concuerda con el formate ISO significa que es una fecha invalida
+            except (ValueError,TypeError):
+                cant += 1
+                #print("La fecha posee un formato invalido o no se puede interpretar como una")
+        print(F"La cantidad de fechas invalidas son {cant}")
+    return anio_post
 
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
@@ -101,15 +116,21 @@ if __name__ == "__main__":
     DIC_BASE = Path(__file__).resolve().parent.parent
 
     file_route = DIC_BASE / 'raw_datasets' / 'bird-sounds' / 'Occurrence.txt'
-
+    """
     dato = input('Ingrese que columna quiere verificar:')
     delimitador = input('Ingrese el delimitador del dataset:')
     cant, lista = validar_coordenadas(file_route,dato,delimitador)
     print(f"La cantidad de registro invalidos son {cant}")
     for i in range(len(lista)):
         print(f"Los registros invalidos son {lista[i]}")
+
     dato1 = input('Ingrese la primer columna:')
     dato2 = input('Ingrese la segunda columna:')
     delimitador = input('Ingrese el delimitador del dataset:')
     constatar_coordenadas(dato1, dato2,file_route,delimitador)
+    """
 
+    dato = input('Ingrese que columna quiere verificar:')
+    delimitador = input('Ingrese el delimitador del dataset:')
+    cant = validar_fechas(dato,file_route,delimitador)
+    print(f"La cantidad de fechas posteriores a 2026 son:{cant}")
