@@ -179,8 +179,12 @@ def verificar_incertidumbre(nombre_columna,path,delimitador):
             try:
                 rango = float(fila[nombre_columna])
             except ValueError:
-                print(F"El dato {fila[nombre_columna] no es un dato numerico}")
-
+                print(f"El dato {fila[nombre_columna] no es un dato numerico}")
+            if rango < 0: 
+                print(f"El valor {rango} no es valido")
+            elif rango > 100:
+                print(f"El valor {rango} no es valido")
+    return
 
 
 #Bloque para pr las funciones de validacion
