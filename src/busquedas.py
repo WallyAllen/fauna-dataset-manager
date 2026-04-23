@@ -9,7 +9,7 @@ def buscar_registros(ruta_archivo, filtros, delimitador = ',' ):
      
     try: #Considero que el try-except se acoplan mejor a la logica de verificar la existencia del archivo
             # con with open puedo abrir el archivo y saber que post uso va a estar cerrado. (evito usar .close() y etc etc)
-        with open(ruta_archivo, mode='r', encoding='utf-8') as archivo:
+        with open(ruta_archivo, mode= 'r', encoding= 'utf-8') as archivo:
             # DictReader asume la primera fila como claves del diccionario 
             lector = csv.DictReader(archivo, delimiter = delimitador)
             resultados = list(filter( #filter me sirve para filtar los elementos que cumplan la condicion y #list me devuelve una lista
@@ -24,5 +24,15 @@ def buscar_registros(ruta_archivo, filtros, delimitador = ',' ):
         raise
             
     return resultados 
-                        
+
+def actualizar_registros(ruta_archivo, ruta_salida, identificador, nombre_columna, valor_nuevo, delimitador = ','):
+    """
+    Esta funcion busca el archivo que busca el nombre de la columna en el registro dicho y setea el nuevo valor  
+    """
+    try:
+        with open(ruta_archivo, mode= 'r', encoding= 'utf-8') as archivo_lectura, open(ruta_salida, mode='w') as archivo_escritura:
+            #abro tanto el archivo que estoy leyendo como el nuevo que voy a modificar (ya que no podemos modificar los raw)
+            lector= csv.DictReader(archivo_lectura, delimiter = delimitador)
+            escritor = csv.DictWritter(archivo_escritura, delimiter = delimitador) 
+                                  
                        
