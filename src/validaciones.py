@@ -77,8 +77,9 @@ def errores_taxonomicos(dataset,path,delimitador):
             return cant_errores
         for fila in csv_reader:
             for i in range(len(colum_dataset["taxonomica"])):
-                if fila[colum_dataset["taxonomica"][i]] = "":
+                if fila[colum_dataset["taxonomica"][i]] == "":
                     cant_errores += 1
+
     return cant_errores
 
 # 3.A
@@ -200,7 +201,7 @@ def verificar_duplicados(dataset,path,delimitador):
                 cant_dupli += 1
             else:
                 set_id.add(fila[colum_dataset["id"]]) 
-    return dupli, duplicados
+    return cant_dupli, duplicados
 
 #3.E
 def verificar_countryCode(dataset,path,delimitador):
@@ -228,7 +229,8 @@ def verificar_countryCode(dataset,path,delimitador):
 def verificar_incertidumbre(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     colum_vacia = True
-
+    fuera_rango = 0
+    no_dato = 0
     print("Evaluando errores en el campo 'coordinateUncertainyInMeters' del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
@@ -244,11 +246,13 @@ def verificar_incertidumbre(dataset,path,delimitador):
             try:
                 rango = float(fila[colum_dataset["coordenada_rango"]])
                 if rango < 0: 
-                    print(f"El valor {rango} no es valido")
+                    fuera_rango += 1
                 elif rango > 100:
-                    print(f"El valor {rango} no es valido")
+                    fuera_rango += 1
             except ValueError:
-                print(f"El dato {fila[colum_dataset["coordenada_rango"]]} no es un dato numerico")
+                no_dato += 1
+        print(f"La cantidad de datos no validos son: {fuera_rango}")
+        print(f"La cantidad de datos no numericos son: {no_dato}")
     return
 
 #3.G
@@ -259,11 +263,11 @@ def resumen_calidad(dataset,path,delimitador):
     cant_dupli = verificar_duplicados(dataset,path,delimitador)
     cant_taxo = errores_taxonomicos(dataset,path,delimitador)
     resumen = {
-        'registro' = cant_regist,
-        'error_coordenadas' = cant_inv,
-        'error_fechas' = cant_fechas,
-        'duplicados' = cant_dupli,
-        'error_taxonomico' = cant_taxo
+            'registro' : cant_regist,
+            'error_coordenadas' : cant_inv,
+            'error_fechas' : cant_fechas,
+            'duplicados' : cant_dupli,
+            'error_taxonomico' : cant_taxo
     }
     # TITULO
     print("\n" + "*" * 50)
@@ -316,3 +320,5 @@ if __name__ == "__main__":
     verificar_countryCode(dato,file_route,delimitador)
 
     verificar_incertidumbre(dato,file_route,delimitador)
+    
+    dict_resumen = resumen_calidad(dato,file_route,delimitador)
