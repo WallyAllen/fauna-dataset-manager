@@ -42,6 +42,12 @@ TRADUCTOR_DATASETS ={
     }
 
 }
+
+LATITUD_NORTE = 13
+LATITUD_SUR = -56.5
+LONGITUD_ESTE = -34.5
+LONGITUD_OESTE = -92
+
 # Evaluar error de medicion de coordenada 
 def evaluar_error(valor,parametro_neg,parametro_pos):
     error = False
@@ -87,7 +93,7 @@ def validar_coordenadas(dataset,path,delimitador):
     cant_inv = 0
     list_inv = []
     colum_vacia = True
-    print("Buscando errores en los datos de latitud...")
+    print("Buscando errores en los datos de 'latitud' y 'longitud'...")
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
@@ -282,7 +288,33 @@ def resumen_calidad(dataset,path,delimitador):
     print(f"Cantidad de datos duplicados: {cant_dupli}")
     print(f"Cantidad de registros con informacion taxonomica incompleta: {cant_taxo}")
 
+    
     return resumen
+
+#3.H
+def evaluar_cotas_america(dataset,path,delimitador):
+    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
+    colum_vacia = True
+    fuera_rango = 0
+    no_dato = 0
+    print("Evaluando errores en el campo 'coordinateUncertainyInMeters' del dataset...")
+    if dataset not in TRADUCTOR_DATASETS.keys():
+            print(f"El dataset {dataset} no existe")
+            return
+    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+    with open(path, "r") as file:
+        try:
+            csv_reader = csv.DictReader(file,delimiter = delimitador)
+        except TypeError:
+            print("Ingrese un delimitador valido")
+
+        for fila in csv_reader:
+            valor_lat = fila[colum_dataset[latitud]]
+            valor_lon = fila[colum_dataset[longitud]]
+            if evaluar_error(valor_lat,LATITUD_SUR,LATITUD_NORTE):
+
+            if evaluar_error(valor_lon,LONGITUD_OESTE,LONGITUD_ESTE):
+
 
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
@@ -300,7 +332,7 @@ if __name__ == "__main__":
 
     file_route = DIC_BASE / 'raw_datasets' / 'inaturalist-filtered' / 'observations.csv'
     dato, delimitador = datos(dato,delimitador)
-    
+    """
     cant, lista = validar_coordenadas(dato,file_route,delimitador)
     print(f"La cantidad de registro invalidos son {cant}")
     for i in range(len(lista)):
@@ -320,5 +352,5 @@ if __name__ == "__main__":
     verificar_countryCode(dato,file_route,delimitador)
 
     verificar_incertidumbre(dato,file_route,delimitador)
-    
+    """
     dict_resumen = resumen_calidad(dato,file_route,delimitador)
