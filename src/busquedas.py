@@ -25,7 +25,7 @@ def buscar_registros(ruta_archivo, filtros, delimitador = ',' ):
             
     return resultados 
 
-def actualizar_registros(ruta_archivo, ruta_salida, identificador, nombre_columna, valor_nuevo, delimitador = ','):
+def actualizar_registros(ruta_archivo, ruta_salida, identificador, columnaID, valor_nuevo, delimitador = ','):
     """
     Esta funcion busca el archivo que busca el nombre de la columna en el registro dicho y setea el nuevo valor  
     """
@@ -33,6 +33,21 @@ def actualizar_registros(ruta_archivo, ruta_salida, identificador, nombre_column
         with open(ruta_archivo, mode= 'r', encoding= 'utf-8') as archivo_lectura, open(ruta_salida, mode='w') as archivo_escritura:
             #abro tanto el archivo que estoy leyendo como el nuevo que voy a modificar (ya que no podemos modificar los raw)
             lector= csv.DictReader(archivo_lectura, delimiter = delimitador)
-            escritor = csv.DictWritter(archivo_escritura, delimiter = delimitador) 
-                                  
+            escritor = csv.DictWriter(archivo_escritura, delimiter = delimitador)
+            #obtengo los nombres de las filas
+            nombre_columnas = lector.fieldnames             
+            #creo el encabezado
+            escritor.writeheader()
+            #itero hasta encontrar lo que quiero modificar
+            for fila in lector:
+                #me fijo si es la fila correcto
+                if fila.get(columnaID) == str(identificador):
+                    #actualizo el valor
+                    fila[nombre_columna] = valor_nuevo
+                escritor.writerow(fila)    
+    except FileNotFoundError: #como dice, en caso de no estar/encontrar el archivo
+        print(f"Error: No se encontró el archivo en la ruta '{ruta_archivo}'.")
+    except Exception as e: # "Exception as e" tiene como funcion notificar el tipo de error que 
+        print(f"Se produjo un error al procesar el archivo: {e}")
+        raise                                  
                        
