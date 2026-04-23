@@ -2,6 +2,8 @@ from pathlib import Path
 from datetime import datetime
 import csv
 import pycountry
+from lectura import count_records
+
 TRADUCTOR_DATASETS ={
     'aidiza': {
         'latitud' : 'decimalLatitude',
@@ -40,7 +42,7 @@ TRADUCTOR_DATASETS ={
     }
 
 }
-# Funcion para abrir el archivo con el path enviado
+# Evaluar error de medicion de coordenada 
 def evaluar_error(valor,parametro_neg,parametro_pos):
     error = False
     if valor != '':
@@ -54,6 +56,31 @@ def evaluar_error(valor,parametro_neg,parametro_pos):
                 except (ValueError, TypeError):
                     error = True
     return error
+
+# Evaluar errores taxonomicos
+def errores_taxonomicos(dataset,path,delimitador):
+    cant_errores = 0
+    colum_vacia = True
+    print("Buscando errores en los datos taxonomicos...")
+    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
+ 
+    if dataset not in TRADUCTOR_DATASETS.keys():
+            print(f"El dataset {dataset} no existe")
+            return cant_errores
+    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+    
+    with open(path, "r") as file:
+        try:
+            csv_reader = csv.DictReader(file,delimiter = delimitador)
+        except TypeError:
+            print("Ingrese un delimitador valido")
+            return cant_errores
+        for fila in csv_reader:
+            for i in range(len(colum_dataset["taxonomica"])):
+                if fila[colum_dataset["taxonomica"][i]] = "":
+                    cant_errores += 1
+    return cant_errores
+
 # 3.A
 def validar_coordenadas(dataset,path,delimitador):
     cant_inv = 0
@@ -173,7 +200,7 @@ def verificar_duplicados(dataset,path,delimitador):
                 cant_dupli += 1
             else:
                 set_id.add(fila[colum_dataset["id"]]) 
-    return cant_dupli, duplicados
+    return dupli, duplicados
 
 #3.E
 def verificar_countryCode(dataset,path,delimitador):
@@ -225,6 +252,33 @@ def verificar_incertidumbre(dataset,path,delimitador):
     return
 
 #3.G
+def resumen_calidad(dataset,path,delimitador):
+    cant_regist = count_records(path)
+    cant_inv = validar_coordenadas(dataset,path,delimitador)
+    cant_fechas = validar_fechas(dataset,path,delimitador)
+    cant_dupli = verificar_duplicados(dataset,path,delimitador)
+    cant_taxo = errores_taxonomicos(dataset,path,delimitador)
+    resumen = {
+        'registro' = cant_regist,
+        'error_coordenadas' = cant_inv,
+        'error_fechas' = cant_fechas,
+        'duplicados' = cant_dupli,
+        'error_taxonomico' = cant_taxo
+    }
+    # TITULO
+    print("\n" + "*" * 50)
+    print(f"RESUMEN DE CALIDAD DEL DATASET {dataset}")
+    print("*" * 50)
+
+    # INFORMACION DE ERRORES
+    print(f"Cantidad total de registros analizados: {cant_regist}")
+    print("-" * 50)
+    print(f"Cantidad de errores en las coordenadas 'latitud' y 'longitud': {cant_inv}")
+    print(f"Cantidad de errores en las fechas: {cant_fechas}")
+    print(f"Cantidad de datos duplicados: {cant_dupli}")
+    print(f"Cantidad de registros con informacion taxonomica incompleta: {cant_taxo}")
+
+    return resumen
 
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
