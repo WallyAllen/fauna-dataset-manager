@@ -295,9 +295,9 @@ def resumen_calidad(dataset,path,delimitador):
 def evaluar_cotas_america(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     colum_vacia = True
-    fuera_rango = 0
-    no_dato = 0
-    print("Evaluando errores en el campo 'coordinateUncertainyInMeters' del dataset...")
+    lat_inv = 0
+    lon_inv = 0
+    print("Evaluando cotas de coordenadas (America del sur) del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
             return
@@ -309,12 +309,13 @@ def evaluar_cotas_america(dataset,path,delimitador):
             print("Ingrese un delimitador valido")
 
         for fila in csv_reader:
-            valor_lat = fila[colum_dataset[latitud]]
-            valor_lon = fila[colum_dataset[longitud]]
+            valor_lat = fila[colum_dataset["latitud"]]
+            valor_lon = fila[colum_dataset["longitud"]]
             if evaluar_error(valor_lat,LATITUD_SUR,LATITUD_NORTE):
-
+                lat_inv += 1
             if evaluar_error(valor_lon,LONGITUD_OESTE,LONGITUD_ESTE):
-
+                lon_inv += 1
+    return lat_inv, lon_inv
 
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
@@ -352,5 +353,12 @@ if __name__ == "__main__":
     verificar_countryCode(dato,file_route,delimitador)
 
     verificar_incertidumbre(dato,file_route,delimitador)
-    """
+    
     dict_resumen = resumen_calidad(dato,file_route,delimitador)
+    """
+    latitud, longitud = evaluar_cotas_america(dato,file_route,delimitador)
+    print(f"Cotas seteadas para la latitud -- NORTE:{LATITUD_NORTE} | SUR:{LATITUD_SUR}")
+    print(f"Cantidad de datos invalidos:{latitud}")
+    print("")
+    print(f"Cotas seteadas para la longitud -- ESTE:{LONGITUD_ESTE} | OESTE:{LONGITUD_OESTE}")
+    print(f"Cantidad de datos invalidos:{longitud}")
