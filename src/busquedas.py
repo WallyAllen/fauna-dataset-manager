@@ -1,6 +1,6 @@
 import csv
 
-def buscar_registros(ruta_archivo, filtros):
+def buscar_registros(ruta_archivo, filtros, delimitador = ',' ):
     """
     Esta funcion busca registros en un archivo iterando con csv.dictreader y
     retorna una lista de diccionarios con las filas que cumplen los filtros
@@ -11,7 +11,7 @@ def buscar_registros(ruta_archivo, filtros):
             # con with open puedo abrir el archivo y saber que post uso va a estar cerrado. (evito usar .close() y etc etc)
             with open(ruta_archivo, mode='r', encoding='utf-8') as archivo:
                 # DictReader asume la primera fila como claves del diccionario 
-                lector = csv.DictReader(archivo, delimiter='\t')
+                lector = csv.DictReader(archivo, delimiter)=
                 for fila in lector:
                     coincidencia = True
                     # Itero sobre los diccionarios 
@@ -25,8 +25,9 @@ def buscar_registros(ruta_archivo, filtros):
                         resultados.append(fila)
     except FileNotFoundError: #como dice, en caso de no estar/encontrar el archivo
         print(f"Error: No se encontró el archivo en la ruta '{ruta_archivo}'.")
-    except Exception as e: # "Expception as e" tiene como funcion notificar el tipo de error que 
+    except Exception as e: # "Exception as e" tiene como funcion notificar el tipo de error que 
         print(f"Se produjo un error al procesar el archivo: {e}")
+        raise
             
     return resultados 
                         
