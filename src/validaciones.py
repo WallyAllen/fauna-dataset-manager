@@ -2,7 +2,7 @@ from pathlib import Path
 from datetime import datetime
 import csv
 import pycountry
-from lectura import count_records
+from src.lectura import count_records
 
 TRADUCTOR_DATASETS ={
     'aidiza': {
@@ -92,6 +92,7 @@ def errores_taxonomicos(dataset,path,delimitador):
 def validar_coordenadas(dataset,path,delimitador):
     cant_inv = 0
     list_inv = []
+    exist_error = False
     colum_vacia = True
     print("Buscando errores en los datos de 'latitud' y 'longitud'...")
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
@@ -105,7 +106,7 @@ def validar_coordenadas(dataset,path,delimitador):
             csv_reader = csv.DictReader(file,delimiter = delimitador)
         except TypeError:
             print("Ingrese un delimitador valido")
-            return cant_inv, list_inv
+            return exist_error,cant_inv, list_inv
        
         # Recorre la columna enviada para buscar errores
         for fila in csv_reader:
@@ -115,23 +116,26 @@ def validar_coordenadas(dataset,path,delimitador):
             if evaluar_error(valor_lat, -90, 90):
                 colum_vacia = False
                 cant_inv += 1
+                exist_error = True
                 list_inv.append(valor_lat)
             if evaluar_error(valor_lon, -180, 180):
                 colum_vacia = False
                 cant_inv += 1
+                exist_error = True
                 list_inv.append(valor_lon)
     if colum_vacia:
         print("No existen valores en la columna o la columna enviada en invalida")
-    return cant_inv, list_inv
+    return exist_error, cant_inv, list_inv
 
 #3.B
 def constatar_coordenadas(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     colum_vacia = True
+    exist_error = False
     print("Evaluando inconsistencias en las coordenadas...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
-            return
+            return exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
     with open(path, "r") as file:
@@ -147,20 +151,22 @@ def constatar_coordenadas(dataset,path,delimitador):
                 print(f"Existe una inconsistencia en ambos registros -- linea {csv_reader.line_num} ")
             elif fila[colum_dataset["latitud"]] == '' or fila[colum_dataset["longitud"]] == '':
                 colum_vacia = False
+                exist_error = True
                 print(f"Existe una inconsistencia en un registro -- linea {csv_reader.line_num}")
-        if colum_vacia: print("No existen inconsistencia en las columnas")
-    return
+        if colum_vacia: print("No existen inconsistencia en las columnas de 'latidud' y 'longitud' ")
+    return exist_error
 
 #3.C
 def validar_fechas(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     anio_post = 0
-    cant = 0
+    fecha_inv = 0
+    exist_error = False
     colum_vacia = True
     print("Evaluando fechas del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
-            return
+            return anio_post,fecha_inv,exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
     with open(path, "r") as file:
@@ -173,13 +179,15 @@ def validar_fechas(dataset,path,delimitador):
             try:
                 #convierte el string formate ISO en un dato tipo datetime
                 fecha = datetime.fromisoformat(fila[colum_dataset["fecha"]])
-                if fecha.year > 2026: anio_post += 1
+                if fecha.year > 2026: 
+                    anio_post += 1
+                    exist_error = True
             #Si la fecha no concuerda con el formate ISO significa que es una fecha invalida
             except (ValueError,TypeError):
-                cant += 1
+                fecha_inv += 1
+                exist_error = True
                 #print("La fecha posee un formato invalido o no se puede interpretar como una")
-        print(F"La cantidad de fechas invalidas son {cant}")
-    return anio_post
+    return anio_post,fecha_inv, exist_error
 
 #3.D
 def verificar_duplicados(dataset,path,delimitador):
@@ -187,12 +195,13 @@ def verificar_duplicados(dataset,path,delimitador):
     colum_vacia = True
     duplicados = []
     cant_dupli = 0
+    exist_error = False
     set_id = set()
 
     print("Evaluando registros repetidos del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
-            return cant_dupli, duplicados
+            return cant_dupli, duplicados,exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
     with open(path, "r") as file:
@@ -205,15 +214,16 @@ def verificar_duplicados(dataset,path,delimitador):
             if fila[colum_dataset["id"]] in set_id:
                 duplicados.append(fila[colum_dataset["id"]])
                 cant_dupli += 1
+                exist_error = True
             else:
                 set_id.add(fila[colum_dataset["id"]]) 
-    return cant_dupli, duplicados
+    return cant_dupli, duplicados,exist_error
 
 #3.E
 def verificar_countryCode(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     colum_vacia = True
-
+    exist_error = False
     print("Evaluando errores en el campo 'countryCode' del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
@@ -229,7 +239,8 @@ def verificar_countryCode(dataset,path,delimitador):
             pais = pycountry.countries.get(alpha_2=fila[colum_dataset["pais"]])
             if pais == None:
                 print(f"El codigo {fila[colum_dataset["pais"]]} no es valido")
-    return
+                exist_error = True
+    return exist_error
 
 #3.F
 def verificar_incertidumbre(dataset,path,delimitador):
@@ -237,10 +248,11 @@ def verificar_incertidumbre(dataset,path,delimitador):
     colum_vacia = True
     fuera_rango = 0
     no_dato = 0
+    exist_error = false
     print("Evaluando errores en el campo 'coordinateUncertainyInMeters' del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
-            return
+            return exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
     with open(path, "r") as file:
         try:
@@ -253,13 +265,16 @@ def verificar_incertidumbre(dataset,path,delimitador):
                 rango = float(fila[colum_dataset["coordenada_rango"]])
                 if rango < 0: 
                     fuera_rango += 1
+                    exist_error = True
                 elif rango > 100:
                     fuera_rango += 1
+                    exist_error = true
             except ValueError:
                 no_dato += 1
+                exist_error = True
         print(f"La cantidad de datos no validos son: {fuera_rango}")
         print(f"La cantidad de datos no numericos son: {no_dato}")
-    return
+    return exist_error
 
 #3.G
 def resumen_calidad(dataset,path,delimitador):
@@ -275,18 +290,19 @@ def resumen_calidad(dataset,path,delimitador):
             'duplicados' : cant_dupli,
             'error_taxonomico' : cant_taxo
     }
+
     # TITULO
     print("\n" + "*" * 50)
     print(f"RESUMEN DE CALIDAD DEL DATASET {dataset}")
     print("*" * 50)
-
+    total_fechas = resumen['error_fechas'][1] + resumen['error_fechas'][2]
     # INFORMACION DE ERRORES
     print(f"Cantidad total de registros analizados: {cant_regist}")
     print("-" * 50)
-    print(f"Cantidad de errores en las coordenadas 'latitud' y 'longitud': {cant_inv}")
-    print(f"Cantidad de errores en las fechas: {cant_fechas}")
-    print(f"Cantidad de datos duplicados: {cant_dupli}")
-    print(f"Cantidad de registros con informacion taxonomica incompleta: {cant_taxo}")
+    print(f"Cantidad de errores en las coordenadas 'latitud' y 'longitud': {resumen['error_coordenadas'][1]}")
+    print(f"Cantidad de errores en las fechas: {total_fechas}")
+    print(f"Cantidad de datos duplicados: {resumen['duplicados'][1]}")
+    print(f"Cantidad de registros con informacion taxonomica incompleta: {resumen['error_taxonomico']}")
 
     
     return resumen
@@ -297,10 +313,11 @@ def evaluar_cotas_america(dataset,path,delimitador):
     colum_vacia = True
     lat_inv = 0
     lon_inv = 0
+    exist_error = False
     print("Evaluando cotas de coordenadas (America del sur) del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
-            return
+            return exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
     with open(path, "r") as file:
         try:
@@ -313,9 +330,11 @@ def evaluar_cotas_america(dataset,path,delimitador):
             valor_lon = fila[colum_dataset["longitud"]]
             if evaluar_error(valor_lat,LATITUD_SUR,LATITUD_NORTE):
                 lat_inv += 1
+                exist_error = True
             if evaluar_error(valor_lon,LONGITUD_OESTE,LONGITUD_ESTE):
                 lon_inv += 1
-    return lat_inv, lon_inv
+                exist_error = True
+    return exist_error, lat_inv, lon_inv
 
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
