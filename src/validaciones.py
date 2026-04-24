@@ -5,7 +5,7 @@ import pycountry
 from lectura import count_records
 
 TRADUCTOR_DATASETS ={
-    'aidiza': {
+    'iadiza': {
         'latitud' : 'decimalLatitude',
         'longitud' : 'decimalLongitude',
         'fecha' : 'eventDate',
