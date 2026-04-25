@@ -1,5 +1,6 @@
 import validaciones
 import csv
+import os
 
 def buscar_registros(ruta_archivo, filtros, delimitador = ',' ):
     """
@@ -44,8 +45,11 @@ def actualizar_registros(dataset, ruta_archivo, ruta_salida, identificador, colu
     if "coordinateUncertaintyInMeters" in valores_nuevos:
         if not validaciones.verificar_incertidumbre(dataset, ruta_salida, delimitador):
             no_valido= True
+          
+    ruta_temporal = ruta_salida + ".temp" #creo una ruta temporal para poder operar       
+            
     try:
-        with open(ruta_archivo, mode= 'r', encoding= 'utf-8') as archivo_lectura, open(ruta_salida, mode='a', encoding='utf-8') as archivo_escritura:
+        with open(ruta_archivo, mode= 'r', encoding= 'utf-8') as archivo_lectura, open(ruta_temporal, mode='w', encoding='utf-8') as archivo_escritura:
             #abro tanto el archivo que estoy leyendo como el nuevo que voy a modificar (ya que no podemos modificar los raw)
             lector= csv.DictReader(archivo_lectura, delimiter = delimitador)
             nombres_columnas = lector.fieldnames 
@@ -63,10 +67,15 @@ def actualizar_registros(dataset, ruta_archivo, ruta_salida, identificador, colu
                     else:
                         print(f"Error al actualizar el registro '{identificador}'")
                 #guardo la fila se haya modificado o no
-                escritor.writerow(fila)    
+                escritor.writerow(fila)
+            os.replace(ruta_temporal, ruta_salida)    
     except FileNotFoundError: #como dice, en caso de no estar/encontrar el archivo
         print(f"Error: No se encontró el archivo en la ruta '{ruta_archivo}'.")
+        if os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)
     except Exception as e: # "Exception as e" tiene como funcion notificar el tipo de error 
         print(f"Se produjo un error al procesar el archivo: {e}")
+        if os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)
         raise                                  
                        
