@@ -362,4 +362,3 @@ if __name__ == "__main__":
     print("")
     print(f"Cotas seteadas para la longitud -- ESTE:{LONGITUD_ESTE} | OESTE:{LONGITUD_OESTE}")
     print(f"Cantidad de datos invalidos:{longitud}")
-
