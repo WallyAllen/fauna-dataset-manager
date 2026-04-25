@@ -49,24 +49,23 @@ LONGITUD_ESTE = -34.5
 LONGITUD_OESTE = -92
 
 # Evaluar error de medicion de coordenada 
-def evaluar_error(valor,parametro_neg,parametro_pos):
-    error = False
-    if valor != '':
-                colum_vacia = False
-                # Utilizo el try/except para valores que no son numeros
-                try:
-                    coord = float(valor)
-                    # La funcion evaluar_error devuelve True si encuentra un error
-                    if coord < parametro_neg or coord > parametro_pos:
-                        error = True
-                except (ValueError, TypeError):
-                    error = True
-    return error
+def evaluar_error(valor, parametro_neg, parametro_pos):
+    """
+    Retorna True si el valor es inválido para el rango dado.
+    Campos vacíos no se consideran error.
+    """
+    if valor == '' or valor is None:
+        return False
+    
+    try:
+        coord = float(valor)
+        return coord < parametro_neg or coord > parametro_pos
+    except (ValueError, TypeError):
+        return True
 
 # Evaluar errores taxonomicos
 def errores_taxonomicos(dataset,path,delimitador):
     cant_errores = 0
-    colum_vacia = True
     print("Buscando errores en los datos taxonomicos...")
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
  
