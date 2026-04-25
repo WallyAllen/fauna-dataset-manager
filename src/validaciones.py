@@ -259,7 +259,7 @@ def verificar_incertidumbre(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
     fuera_rango = 0
     no_dato = 0
-    exist_error = false
+    exist_error = False
     print("Evaluando errores en el campo 'coordinateUncertainyInMeters' del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
@@ -279,7 +279,7 @@ def verificar_incertidumbre(dataset,path,delimitador):
                     exist_error = True
                 elif rango > 100:
                     fuera_rango += 1
-                    exist_error = true
+                    exist_error = True
             except ValueError:
                 no_dato += 1
                 exist_error = True
