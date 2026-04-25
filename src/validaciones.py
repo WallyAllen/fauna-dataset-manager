@@ -161,7 +161,6 @@ def validar_fechas(dataset,path,delimitador):
     anio_post = 0
     fecha_inv = 0
     exist_error = False
-    colum_vacia = True
     print("Evaluando fechas del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
@@ -191,7 +190,6 @@ def validar_fechas(dataset,path,delimitador):
 #3.D
 def verificar_duplicados(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
-    colum_vacia = True
     duplicados = []
     cant_dupli = 0
     exist_error = False
@@ -221,7 +219,6 @@ def verificar_duplicados(dataset,path,delimitador):
 #3.E
 def verificar_countryCode(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
-    colum_vacia = True
     exist_error = False
     print("Evaluando errores en el campo 'countryCode' del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
@@ -244,7 +241,6 @@ def verificar_countryCode(dataset,path,delimitador):
 #3.F
 def verificar_incertidumbre(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
-    colum_vacia = True
     fuera_rango = 0
     no_dato = 0
     exist_error = false
@@ -309,7 +305,6 @@ def resumen_calidad(dataset,path,delimitador):
 #3.H
 def evaluar_cotas_america(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
-    colum_vacia = True
     lat_inv = 0
     lon_inv = 0
     exist_error = False
@@ -338,7 +333,7 @@ def evaluar_cotas_america(dataset,path,delimitador):
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
     def datos(dato,delimitador):
-        dato = input('Ingrese que dataset quiere verificar (aidiza - inaturalist - xenocanto):')
+        dato = input('Ingrese que dataset quiere verificar (iadiza - inaturalist - xenocanto):')
         delimitador = input('Ingrese el delimitador del dataset:')
         return dato,delimitador
 
