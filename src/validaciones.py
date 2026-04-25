@@ -74,7 +74,7 @@ def errores_taxonomicos(dataset,path,delimitador):
             return cant_errores
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
     
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
         except TypeError:
@@ -100,7 +100,7 @@ def validar_coordenadas(dataset,path,delimitador):
             return cant_inv, list_inv
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
     
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
         except TypeError:
@@ -137,7 +137,7 @@ def constatar_coordenadas(dataset,path,delimitador):
             return exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
         except TypeError:
@@ -167,7 +167,7 @@ def validar_fechas(dataset,path,delimitador):
             return anio_post,fecha_inv,exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
         except TypeError:
@@ -201,7 +201,7 @@ def verificar_duplicados(dataset,path,delimitador):
             return cant_dupli, duplicados,exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
         except TypeError:
@@ -225,7 +225,7 @@ def verificar_countryCode(dataset,path,delimitador):
             print(f"El dataset {dataset} no existe")
             return
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
         except TypeError:
@@ -249,7 +249,7 @@ def verificar_incertidumbre(dataset,path,delimitador):
             print(f"El dataset {dataset} no existe")
             return exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
         except TypeError:
@@ -313,7 +313,7 @@ def evaluar_cotas_america(dataset,path,delimitador):
             print(f"El dataset {dataset} no existe")
             return exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
         except TypeError:
