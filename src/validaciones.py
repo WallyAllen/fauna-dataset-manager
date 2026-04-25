@@ -88,42 +88,58 @@ def errores_taxonomicos(dataset,path,delimitador):
     return cant_errores
 
 # 3.A
-def validar_coordenadas(dataset,path,delimitador):
+def validar_coordenadas(dataset, path, delimitador):
+    """
+    Ejercicio 3.A
+    Detecta registros con coordenadas geográficas inválidas.
+
+    Args:
+        dataset (str): Nombre del dataset ('iadiza', 'inaturalist', 'xenocanto')
+        path (str | Path): Ruta al archivo CSV
+        delimitador (str): Separador de campos del archivo
+
+    Returns:
+        tuple:
+            - exist_error (bool): True si hay al menos un registro inválido
+            - cant_inv (int): Cantidad de REGISTROS inválidos
+            - list_inv (list[str]): IDs de los registros inválidos
+
+    Raises:
+        ValueError: Si el dataset no está en TRADUCTOR_DATASETS
+        ValueError: Si el delimitador no es un string de un carácter
+    """
+    if delimitador in ("\\t", "/t"):
+        delimitador = "\t"
+
+    if dataset not in TRADUCTOR_DATASETS:
+        raise ValueError(
+            f"Dataset '{dataset}' no reconocido. "
+            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+        )
+
+    colum_dataset = TRADUCTOR_DATASETS[dataset]
     cant_inv = 0
     list_inv = []
     exist_error = False
-    colum_vacia = True
-    print("Buscando errores en los datos de 'latitud' y 'longitud'...")
-    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
-    if dataset not in TRADUCTOR_DATASETS.keys():
-            print(f"El dataset {dataset} no existe")
-            return cant_inv, list_inv
-    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
-    
+
     with open(path, "r", encoding="utf-8") as file:
         try:
-            csv_reader = csv.DictReader(file,delimiter = delimitador)
-        except TypeError:
-            print("Ingrese un delimitador valido")
-            return exist_error,cant_inv, list_inv
-       
-        # Recorre la columna enviada para buscar errores
+            csv_reader = csv.DictReader(file, delimiter=delimitador)
+        except TypeError as e:
+            raise ValueError(f"Delimitador inválido: {e}")
+
         for fila in csv_reader:
-        # Evaluo si existe un valor en ese registro
             valor_lat = fila[colum_dataset["latitud"]]
             valor_lon = fila[colum_dataset["longitud"]]
-            if evaluar_error(valor_lat, -90, 90):
-                colum_vacia = False
+
+            lat_invalida = evaluar_error(valor_lat, -90, 90)
+            lon_invalida = evaluar_error(valor_lon, -180, 180)
+
+            if lat_invalida or lon_invalida:
                 cant_inv += 1
                 exist_error = True
-                list_inv.append(valor_lat)
-            if evaluar_error(valor_lon, -180, 180):
-                colum_vacia = False
-                cant_inv += 1
-                exist_error = True
-                list_inv.append(valor_lon)
-    if colum_vacia:
-        print("No existen valores en la columna o la columna enviada en invalida")
+                list_inv.append(fila[colum_dataset["id"]])
+
     return exist_error, cant_inv, list_inv
 
 #3.B
