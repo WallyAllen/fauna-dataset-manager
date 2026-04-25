@@ -1,7 +1,7 @@
 import validaciones
 import csv
 
-def buscar_registros(dataset, ruta_archivo, filtros, delimitador = ',' ):
+def buscar_registros(ruta_archivo, filtros, delimitador = ',' ):
     """
     Esta funcion busca registros en un archivo iterando con csv.dictreader y
     retorna una lista de diccionarios con las filas que cumplen los filtros
@@ -26,33 +26,33 @@ def buscar_registros(dataset, ruta_archivo, filtros, delimitador = ',' ):
             
     return resultados 
 
-def actualizar_registros(dataset,ruta_archivo, ruta_salida, identificador, columnaID, valores_nuevos, delimitador = ','):
+def actualizar_registros(dataset, ruta_archivo, ruta_salida, identificador, columnaID, valores_nuevos, delimitador = ','):
     """
     Esta funcion busca el archivo que busca el nombre de la columna en el registro dicho y setea el nuevo valor  
     """
+    
+    no_valido = False
+    if "decimalLatitude" in valores_nuevos or "decimalLongitude" in valores_nuevos:
+        if not validaciones.validar_coordenadas(dataset, ruta_salida, delimitador):
+            no_valido= True
+    if "eventDate" in valores_nuevos:
+        if not validaciones.validar_fechas(dataset, ruta_salida, delimitador):
+            no_valido= True
+    if "countryCode" in valores_nuevos:
+        if not validaciones.verificar_countryCode(dataset, ruta_salida, delimitador):
+            no_valido= True
+    if "coordinateUncertaintyInMeters" in valores_nuevos:
+        if not validaciones.verificar_incertidumbre(dataset, ruta_salida, delimitador):
+            no_valido= True
     try:
-        with open(ruta_archivo, mode= 'r', encoding= 'utf-8') as archivo_lectura, open(ruta_salida, mode='w', encoding='utf-8') as archivo_escritura:
+        with open(ruta_archivo, mode= 'r', encoding= 'utf-8') as archivo_lectura, open(ruta_salida, mode='a', encoding='utf-8') as archivo_escritura:
             #abro tanto el archivo que estoy leyendo como el nuevo que voy a modificar (ya que no podemos modificar los raw)
             lector= csv.DictReader(archivo_lectura, delimiter = delimitador)
             nombres_columnas = lector.fieldnames 
-            escritor = csv.DictWriter(archivo_escritura, fieldnames = nombres_columnas, delimiter = delimitador)
-            #obtengo los nombres de las filas            
+            escritor = csv.DictWriter(archivo_escritura, fieldnames = nombres_columnas, delimiter = delimitador)         
             #creo el encabezado
             escritor.writeheader()
             #itero hasta encontrar lo que quiero modificar
-            no_valido = False
-            if "decimalLatitude" in valores_nuevos or "decimalLongitude" in valores_nuevos:
-                if not validaciones.validar_coordenadas(dataset, ruta_salida, delimitador):
-                    no_valido= True
-            if "eventDate" in valores_nuevos:
-                if not validaciones.validar_fechas(dataset, ruta_salida, delimitador):
-                    no_valido= True
-            if "countryCode" in valores_nuevos:
-                if not validaciones.verificar_countryCode(dataset, ruta_salida, delimitador):
-                    no_valido= True
-            if "coordinateUncertaintyInMeters" in valores_nuevos:
-                if not validaciones.verificar_incertidumbre(dataset, ruta_salida, delimitador):
-                    no_valido= True
             for fila in lector:
                 #me fijo si es la fila correcto
                 if fila.get(columnaID) == str(identificador):
