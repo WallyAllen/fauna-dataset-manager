@@ -48,4 +48,14 @@ def eliminar_por_lista(ruta_entrada, ruta_salida, columnaID, identificador, deli
                     encontre= True
                 else:
                     escritor.writerow(fila)
-   
+        if not encontre:
+            print("Ninguno de los valores fue encontrado")
+        os.replace(ruta_temporal, ruta_salida)
+    except FileNotFoundError:
+        print("FileNotFoundError")
+        os.remove(ruta_temporal)
+    except Exception as e: # "Exception as e" tiene como funcion notificar el tipo de error 
+        print(f"Se produjo un error al procesar el archivo: {e}")
+        if os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)
+        raise   
