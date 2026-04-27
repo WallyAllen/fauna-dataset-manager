@@ -151,7 +151,7 @@ def constatar_coordenadas(dataset,path,delimitador):
     print("Evaluando inconsistencias en las coordenadas...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             raise ValueError(
-                f"El dataset {dataset} no existe"
+                f"Dataset '{dataset}' no reconocido. "
                 f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
             )
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
@@ -169,7 +169,6 @@ def constatar_coordenadas(dataset,path,delimitador):
                 cant_inconsistentes +=1
                 exist_error = True
                 list_ids.append(fila[colum_dataset["id"]])
-        
     return exist_error, cant_inconsistentes,list_ids
 
 #3.C
