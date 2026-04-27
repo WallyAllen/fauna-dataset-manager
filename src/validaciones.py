@@ -149,15 +149,17 @@ def constatar_coordenadas(dataset,path,delimitador):
     exist_error = False
     print("Evaluando inconsistencias en las coordenadas...")
     if dataset not in TRADUCTOR_DATASETS.keys():
-            print(f"El dataset {dataset} no existe")
-            return exist_error
+            raise ValueError(
+                f"El dataset {dataset} no existe"
+                f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+            )
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
     with open(path, "r", encoding="utf-8") as file:
         try:
             csv_reader = csv.DictReader(file,delimiter = delimitador)
-        except TypeError:
-            print("Ingrese un delimitador valido")
+        except TypeError as e:
+            raise ValueError(f"Delimitador inválido: {e}")
 
         for fila in csv_reader:
             lat = fila[colum_dataset["latitud"]]
