@@ -160,14 +160,12 @@ def constatar_coordenadas(dataset,path,delimitador):
             print("Ingrese un delimitador valido")
 
         for fila in csv_reader:
-            if  fila[colum_dataset["latitud"]] == '' and fila[colum_dataset["longitud"]] == '':
-                pass
-                colum_vacia = False
-                print(f"Existe una inconsistencia en ambos registros -- linea {csv_reader.line_num} ")
-            elif fila[colum_dataset["latitud"]] == '' or fila[colum_dataset["longitud"]] == '':
+            lat = fila[colum_dataset["latitud"]]
+            lon = fila[colum_dataset["longitud"]]
+            if (lat == '') != (lon == ''):  # XOR: inconsistencia solo si UNA está vacía
                 colum_vacia = False
                 exist_error = True
-                print(f"Existe una inconsistencia en un registro -- linea {csv_reader.line_num}")
+                print(f"Existe una inconsistencia en linea {csv_reader.line_num}")
         if colum_vacia: print("No existen inconsistencia en las columnas de 'latidud' y 'longitud' ")
     return exist_error
 
