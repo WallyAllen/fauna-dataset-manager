@@ -145,8 +145,9 @@ def validar_coordenadas(dataset, path, delimitador):
 #3.B
 def constatar_coordenadas(dataset,path,delimitador):
     if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
-    colum_vacia = True
     exist_error = False
+    cant_inconsistentes = 0
+    list_ids = []
     print("Evaluando inconsistencias en las coordenadas...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             raise ValueError(
@@ -165,11 +166,11 @@ def constatar_coordenadas(dataset,path,delimitador):
             lat = fila[colum_dataset["latitud"]]
             lon = fila[colum_dataset["longitud"]]
             if (lat == '') != (lon == ''):  # XOR: inconsistencia solo si UNA está vacía
-                colum_vacia = False
+                cant_inconsistentes +=1
                 exist_error = True
-                print(f"Existe una inconsistencia en linea {csv_reader.line_num}")
-        if colum_vacia: print("No existen inconsistencia en las columnas de 'latidud' y 'longitud' ")
-    return exist_error
+                list_ids.append(fila[colum_dataset["id"]])
+        
+    return exist_error, cant_inconsistentes,list_ids
 
 #3.C
 def validar_fechas(dataset,path,delimitador):
