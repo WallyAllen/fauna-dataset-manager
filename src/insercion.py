@@ -89,4 +89,24 @@ def validate_record(record, dataset_name):
             print(f"Error: El código de país '{pais_str}' no es válido.")
             return False
 
+    # 6. Validar incertidumbre (si el dataset la usa)
+    col_rango = cols.get('coordenada_rango')
+    if col_rango and col_rango in record:
+        rango_str = record[col_rango]
+        if rango_str != '':
+            try:
+                rango = float(rango_str)
+                if rango < 0 or rango > 100:
+                    print("Error: Incertidumbre fuera de rango (0-100).")
+                    return False
+            except ValueError:
+                print("Error: Incertidumbre no es un valor numérico.")
+                return False
+
+    # 7. Validar datos taxonómicos
+    for col_tax in cols.get('taxonomica', []):
+        if record.get(col_tax, '') == '':
+            print(f"Error: Campo taxonómico '{col_tax}' está vacío.")
+            return False
+
     return True
