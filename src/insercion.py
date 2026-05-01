@@ -64,4 +64,29 @@ def validate_record(record, dataset_name):
         print("Error: Inconsistencia en coordenadas (falta latitud o longitud).")
         return False
 
+    # 3. Está dentro de América del Sur?
+    if evaluar_error(lat, LATITUD_SUR, LATITUD_NORTE) or evaluar_error(lon, LONGITUD_OESTE, LONGITUD_ESTE):
+        print("Error: Coordenadas fuera de los límites de América del Sur.")
+        return False
+
+    # 4. Validar fechas
+    fecha_str = record.get(cols['fecha'], '')
+    if fecha_str != '':
+        try:
+            fecha = datetime.fromisoformat(fecha_str)
+            if fecha.year > 2026:
+                print("Error: La fecha es posterior a 2026.")
+                return False
+        except (ValueError, TypeError):
+            print("Error: La fecha no tiene un formato ISO válido.")
+            return False
+
+    # 5. Validar countryCode
+    pais_str = record.get(cols['pais'], '')
+    if pais_str != '':
+        pais = pycountry.countries.get(alpha_2=pais_str)
+        if pais is None:
+            print(f"Error: El código de país '{pais_str}' no es válido.")
+            return False
+
     return True
