@@ -1,4 +1,14 @@
 import csv
+from datetime import datetime
+import pycountry
+from validaciones import (
+    TRADUCTOR_DATASETS,
+    evaluar_error,
+    LATITUD_NORTE,
+    LATITUD_SUR,
+    LONGITUD_ESTE,
+    LONGITUD_OESTE
+)
 
 def create_record_structure(filepath, id_column='id', encoding='utf-8', delimiter='\t'):
     """
@@ -27,3 +37,31 @@ def generate_empty_record(columns, id_column='id'):
     empty_record = {col: '' for col in columns if col != id_column}
     
     return empty_record
+
+def validate_record(record, dataset_name):
+    """
+    Valida un registro antes de insertarlo.
+    Reutiliza funciones y constantes de validaciones.py.
+    No considera la validación del ID.
+    Retorna True si el registro es válido, False en caso contrario.
+    """
+    if dataset_name not in TRADUCTOR_DATASETS:
+        print(f"Dataset '{dataset_name}' no reconocido.")
+        return False
+        
+    cols = TRADUCTOR_DATASETS[dataset_name]
+    
+    # 1. Validar coordenadas
+    lat = record.get(cols['latitud'], '')
+    lon = record.get(cols['longitud'], '')
+    
+    if evaluar_error(lat, -90, 90) or evaluar_error(lon, -180, 180):
+        print("Error: Coordenadas geográficas inválidas.")
+        return False
+        
+    # 2. Inconsistencia de coordenadas
+    if (lat == '') != (lon == ''):
+        print("Error: Inconsistencia en coordenadas (falta latitud o longitud).")
+        return False
+
+    return True
