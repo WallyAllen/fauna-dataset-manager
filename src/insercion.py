@@ -17,3 +17,13 @@ def create_record_structure(filepath, id_column='id', encoding='utf-8', delimite
     record_structure = {col: '' for col in columns if col != id_column}
     
     return record_structure
+
+def generate_empty_record(columns, id_column='id'):
+    """
+    Recibe una lista de columnas y genera un registro vacío representado 
+    como un diccionario. Inicializa todos los valores con una cadena vacía.
+    Se excluye la columna correspondiente al ID.
+    """
+    empty_record = {col: '' for col in columns if col != id_column}
+    
+    return empty_record
