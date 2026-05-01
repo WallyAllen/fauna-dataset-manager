@@ -86,7 +86,7 @@ def errores_taxonomicos(dataset,path):
     return cant_errores
 
 # 3.A
-def validar_coordenadas(dataset, path):
+def validar_coordenadas(dataset, path,lat = False, lon = False):
     """
     Ejercicio 3.A
     Detecta registros con coordenadas geográficas inválidas.
@@ -117,6 +117,7 @@ def validar_coordenadas(dataset, path):
     cant_inv = 0
     list_inv = []
     exist_error = False
+    result = {}
 
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file, delimiter=colum_dataset['delimitador'])
@@ -124,16 +125,26 @@ def validar_coordenadas(dataset, path):
         for fila in csv_reader:
             valor_lat = fila[colum_dataset["latitud"]]
             valor_lon = fila[colum_dataset["longitud"]]
-
-            lat_invalida = evaluar_error(valor_lat, -90, 90)
-            lon_invalida = evaluar_error(valor_lon, -180, 180)
+            if not lat and not lon:
+                lat_invalida = evaluar_error(valor_lat, -90, 90)
+                lon_invalida = evaluar_error(valor_lon, -180, 180)
+            if lat:
+                lat_invalida = evaluar_error(valor_lat, -90, 90)
+                lon_invalida = False
+            elif lon:
+                lon_invalida = evaluar_error(valor_lon, -180, 180)
+                lat_invalida = False
 
             if lat_invalida or lon_invalida:
                 cant_inv += 1
                 exist_error = True
                 list_inv.append(fila[colum_dataset["id"]])
-
-    return exist_error, cant_inv, list_inv
+    result ={
+        'cantidad_invalidos' : cant_inv,
+        'lista_invalidos' : list_inv,
+        'existe_error' : exist_error
+    }
+    return result
 
 #3.B
 def constatar_coordenadas(dataset,path):
@@ -157,7 +168,12 @@ def constatar_coordenadas(dataset,path):
                 cant_inconsistentes +=1
                 exist_error = True
                 list_ids.append(fila[colum_dataset["id"]])
-    return exist_error, cant_inconsistentes,list_ids
+    result = {
+        'cantidad_inconsistencias' : cant_inconsistentes,
+        'lista_ids' : list_ids,
+        'existe_error' : exist_error
+    }
+    return result
 
 #3.C
 def validar_fechas(dataset,path):
@@ -185,7 +201,12 @@ def validar_fechas(dataset,path):
                 fecha_inv += 1
                 exist_error = True
                 #print("La fecha posee un formato invalido o no se puede interpretar como una")
-    return anio_post,fecha_inv, exist_error
+    result = {
+        'anios_posteriores' : anio_post,
+        'fechas_invalidas' : fecha_inv,
+        'existe_error' : exist_error
+    }
+    return result
 
 #3.D
 def verificar_duplicados(dataset,path):
@@ -209,12 +230,18 @@ def verificar_duplicados(dataset,path):
                 cant_dupli += 1
                 exist_error = True
             else:
-                set_id.add(fila[colum_dataset["id"]]) 
-    return cant_dupli, duplicados,exist_error
+                set_id.add(fila[colum_dataset["id"]])
+    result = {
+        'cantidad_duplicados' : cant_dupli,
+        'id_duplicados' : duplicados,
+        'existe_error' : exist_error
+    }
+    return result
 
 #3.E
 def verificar_countryCode(dataset,path):
     exist_error = False
+    list_ids = []
     print("Evaluando errores en el campo 'countryCode' del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
@@ -228,13 +255,19 @@ def verificar_countryCode(dataset,path):
             if pais == None:
                 print(f"El codigo {fila[colum_dataset["pais"]]} no es valido")
                 exist_error = True
-    return exist_error
+                list_ids.append(fila[colum_dataset["id"]])
+    result = {
+        'lista_ids' : list_ids,
+        'existe_error' : exist_error
+    }
+    return result
 
 #3.F
 def verificar_incertidumbre(dataset,path):
     fuera_rango = 0
     no_dato = 0
     exist_error = False
+    list_ids = []
     print("Evaluando errores en el campo 'coordinateUncertainyInMeters' del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
@@ -255,9 +288,14 @@ def verificar_incertidumbre(dataset,path):
             except ValueError:
                 no_dato += 1
                 exist_error = True
-        print(f"La cantidad de datos no validos son: {fuera_rango}")
-        print(f"La cantidad de datos no numericos son: {no_dato}")
-    return exist_error
+        if exist_error: list_ids.append(fila[colum_dataset["id"]])
+    result = {
+        'dato_invalido' : fuera_rango,
+        'no_dato' : no_dato,
+        'lista_ids' : list_ids,
+        'existe_error' : exist_error
+    }
+    return result
 
 #3.G
 def resumen_calidad(dataset,path):
@@ -291,9 +329,10 @@ def resumen_calidad(dataset,path):
     return resumen
 
 #3.H
-def evaluar_cotas_america(dataset,path):
+def evaluar_cotas_america(dataset,path,lat = False, lon = False):
     lat_inv = 0
     lon_inv = 0
+    list_ids = []
     exist_error = False
     print("Evaluando cotas de coordenadas (America del sur) del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
@@ -312,7 +351,38 @@ def evaluar_cotas_america(dataset,path):
             if evaluar_error(valor_lon,LONGITUD_OESTE,LONGITUD_ESTE):
                 lon_inv += 1
                 exist_error = True
-    return exist_error, lat_inv, lon_inv
+        if exist_error: list_ids.append(fila[colum_dataset["id"]])
+    if not lat and not lon:
+        result = {
+            'latitudes_invalidas' : lat_inv,
+            'longitudes_invalidas' : lon_inv,
+            'lista_ids' : list_ids,
+            'existe_error' : exist_error
+        }
+    if lat:
+        result = {
+            'latitudes_invalidas' : lat_inv,
+            'lista_ids' : list_ids,
+            'existe_error' : exist_error
+        }
+    elif lon:
+        result = {
+            'longitudes_invalidas' : lon_inv,
+            'lista_ids' : list_ids,
+            'existe_error' : exist_error
+            }
+    return result
+
+#3.I 
+def validar_longitud(dato, path):
+    resultado_cotas = evaluar_cotas_america(dato,path,lon=True)
+    resultado_coordenadas = validar_coordenadas(dato,path,lon=True)
+    return resultado_cotas, resultado_coordenadas
+
+def validar_latitud(dato,path):
+    resultado_cotas = evaluar_cotas_america(dato,path,lat=True)
+    resultado_coordenadas = validar_coordenadas(dato,path,lat=True)
+    return resultado_cotas,resultado_coordenadas
 
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
@@ -328,32 +398,49 @@ if __name__ == "__main__":
 
     file_route = DIC_BASE / 'raw_datasets' / 'inaturalist-filtered' / 'observations.csv'
     dato = datos(dato)
+    """
+    resultado = validar_coordenadas(dato,file_route)
+    print(f"La cantidad de registro invalidos son {resultado["cantidad_invalidos"]}")
+    for i in resultado["lista_invalidos"]:
+        print(f"Los registros invalidos son {i}")
 
-    cant, lista = validar_coordenadas(dato,file_route)
-    print(f"La cantidad de registro invalidos son {cant}")
-    for i in range(len(lista)):
-        print(f"Los registros invalidos son {lista[i]}")
+    resultado = constatar_coordenadas(dato,file_route)
+    print(f"La cantidad de inconsistencias son: {resultado["cantidad_inconsistencias"]}")
+    for i in resultado["lista_ids"]:
+        print(f"Los ids incosistentes son:{i}")
 
-    constatar_coordenadas(dato,file_route)
+    resultado = validar_fechas(dato,file_route)
+    print(f"La cantidad de fechas posteriores a 2026 son:{resultado["anios_posteriores"]}")
 
-    cant = validar_fechas(dato,file_route)
-    print(f"La cantidad de fechas posteriores a 2026 son:{cant}")
+    resultado = verificar_duplicados(dato,file_route)
+    for i in resultado["id_duplicados"]:
+        print(f"Los IDS duplicados son :{i}")
+    print(f"La cantidad de datos duplicados son :{resultado["cantidad_duplicados"]}")
 
-    cant,lista = verificar_duplicados(dato,file_route)
-    for i in range(len(lista)):
-        print(f"Los IDS duplicados son :{lista[i]}")
-    print(f"La cantidad de datos duplicados son :{cant}")
+    resultado = verificar_countryCode(dato,file_route)
+    for i in resultado["lista_ids"]:
+        print(f"Los IDS invalidos son:{i}")
 
-    verificar_countryCode(dato,file_route)
+    resultado = verificar_incertidumbre(dato,file_route)
+    for i in resultado["lista_ids"]:
+        print(f"Los IDS invalidos son:{i}")
 
-    verificar_incertidumbre(dato,file_route)
-    
     dict_resumen = resumen_calidad(dato,file_route)
 
-    latitud, longitud = evaluar_cotas_america(dato,file_route)
+    resultado = evaluar_cotas_america(dato,file_route)
     print(f"Cotas seteadas para la latitud -- NORTE:{LATITUD_NORTE} | SUR:{LATITUD_SUR}")
-    print(f"Cantidad de datos invalidos:{latitud}")
+    print(f"Cantidad de datos invalidos:{resultado["latidudes_invalidas"]}")
     print("")
     print(f"Cotas seteadas para la longitud -- ESTE:{LONGITUD_ESTE} | OESTE:{LONGITUD_OESTE}")
-    print(f"Cantidad de datos invalidos:{longitud}")
-    
+    print(f"Cantidad de datos invalidos:{resultado["longitudes_invalidas"]}")
+    """
+    resultado_latitud = validar_latitud(dato,file_route)
+    if resultado_latitud[0]["existe_error"]:
+        print("Funco latitud")
+    if resultado_latitud[1]["existe_error"]:
+        print("Funco latitud 2")
+    resultado_longitud = validar_longitud(dato,file_route)
+    if resultado_longitud[0]["existe_error"]:
+        print("Funco longitud")
+    if resultado_longitud[1]["existe_error"]:
+        print("FUnc longitud 2")
