@@ -138,3 +138,23 @@ def get_next_base_id(dataset_name, filepath):
         
     return max_id + 1
 
+def format_record_for_insertion(record, dataset_name, filepath):
+    """
+    Recibe un registro validado y le añade los IDs (autoincremental) según el dataset correspondiente.
+    Retorna el diccionario listo para ser añadido al CSV.
+    """
+    if dataset_name not in TRADUCTOR_DATASETS:
+        return record
+        
+    # Obtenemos el ID siguiente de forma autoincremental leyendo el archivo
+    base_id = get_next_base_id(dataset_name, filepath)
+    
+    if dataset_name == 'inaturalist':
+        record['id'] = str(base_id)
+        if 'occurrenceID' in record:
+            record['occurrenceID'] = f"https://www.inaturalist.org/observations/{base_id}"
+        if 'catalogNumber' in record:
+            record['catalogNumber'] = str(base_id)
+
+    return record
+
