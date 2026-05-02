@@ -171,3 +171,36 @@ def format_record_for_insertion(record, dataset_name, filepath):
         if 'catalogNumber' in record:
             record['catalogNumber'] = catalog_num
     return record
+
+def insert_record(dataset_name, in_filepath, out_filepath):
+    """
+    Lee el dataset original para obtener su estructura.
+    Agrega un nuevo registro solicitando por teclado los datos esenciales.
+    """
+    if dataset_name not in TRADUCTOR_DATASETS:
+        print(f"Dataset '{dataset_name}' no reconocido.")
+        return False
+        
+    id_col = TRADUCTOR_DATASETS[dataset_name]['id']
+    delim = TRADUCTOR_DATASETS[dataset_name]['delimitador']
+    
+    # 1. Crear estructura vacía basada en el dataset original
+    record = create_record_structure(in_filepath, id_column=id_col, delimiter=delim)
+    
+    # 2. Pedir datos por teclado
+    print("--- Ingrese los datos del nuevo registro ---")
+    traductor = TRADUCTOR_DATASETS[dataset_name]
+    columnas_esenciales = []
+    
+    for key, value in traductor.items():
+        if key in ['delimitador', 'id']:
+            continue
+        if isinstance(value, list):
+            columnas_esenciales.extend(value)
+        elif value != '':
+            columnas_esenciales.append(value)
+            
+    for col in columnas_esenciales:
+        if col in record:
+            record[col] = input(f"Ingrese valor para {col}: ")
+    return True
