@@ -1,13 +1,16 @@
 import csv
-from datetime import datetime
-import pycountry
+import random
+import os
+import contextlib
 from validaciones import (
     TRADUCTOR_DATASETS,
-    evaluar_error,
-    LATITUD_NORTE,
-    LATITUD_SUR,
-    LONGITUD_ESTE,
-    LONGITUD_OESTE
+    validar_coordenadas,
+    constatar_coordenadas,
+    validar_fechas,
+    verificar_countryCode,
+    verificar_incertidumbre,
+    errores_taxonomicos,
+    evaluar_cotas_america
 )
 
 def create_record_structure(filepath, id_column='id', encoding='utf-8', delimiter='\t'):
@@ -41,72 +44,65 @@ def generate_empty_record(columns, id_column='id'):
 def validate_record(record, dataset_name):
     """
     Valida un registro antes de insertarlo.
-    Reutiliza funciones y constantes de validaciones.py.
-    No considera la validación del ID.
+    Se utiliza el código de validaciones.py, debido a que lee archivos enteros, creamos un archivo temporal,
+    luego escribimos el registro el archivo temporal y se lo pasamos a las funciones originales.
     Retorna True si el registro es válido, False en caso contrario.
     """
     if dataset_name not in TRADUCTOR_DATASETS:
         print(f"Dataset '{dataset_name}' no reconocido.")
         return False
         
-    cols = TRADUCTOR_DATASETS[dataset_name]
+    temp_file = f"temp_validation_{random.randint(1000, 9999)}.csv"
+    delim = TRADUCTOR_DATASETS[dataset_name]['delimitador']
     
-    # 1. Validar coordenadas
-    lat = record.get(cols['latitud'], '')
-    lon = record.get(cols['longitud'], '')
-    
-    if evaluar_error(lat, -90, 90) or evaluar_error(lon, -180, 180):
-        print("Error: Coordenadas geográficas inválidas.")
-        return False
-        
-    # 2. Inconsistencia de coordenadas
-    if (lat == '') != (lon == ''):
-        print("Error: Inconsistencia en coordenadas (falta latitud o longitud).")
-        return False
-
-    # 3. Está dentro de América del Sur?
-    if evaluar_error(lat, LATITUD_SUR, LATITUD_NORTE) or evaluar_error(lon, LONGITUD_OESTE, LONGITUD_ESTE):
-        print("Error: Coordenadas fuera de los límites de América del Sur.")
-        return False
-
-    # 4. Validar fechas
-    fecha_str = record.get(cols['fecha'], '')
-    if fecha_str != '':
-        try:
-            fecha = datetime.fromisoformat(fecha_str)
-            if fecha.year > 2026:
-                print("Error: La fecha es posterior a 2026.")
-                return False
-        except (ValueError, TypeError):
-            print("Error: La fecha no tiene un formato ISO válido.")
+    try:
+        # Escribimos el registro como un CSV de una fila
+        with open(temp_file, 'w', encoding='utf-8', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=record.keys(), delimiter=delim)
+            writer.writeheader()
+            writer.writerow(record)
+            
+        # 1. Validar coordenadas
+        exist_error, _, _ = validar_coordenadas(dataset_name, temp_file)
+        if exist_error:
+            return False
+            
+        # 2. Inconsistencia de coordenadas
+        exist_error, _, _ = constatar_coordenadas(dataset_name, temp_file)
+        if exist_error:
             return False
 
-    # 5. Validar countryCode
-    pais_str = record.get(cols['pais'], '')
-    if pais_str != '':
-        pais = pycountry.countries.get(alpha_2=pais_str)
-        if pais is None:
-            print(f"Error: El código de país '{pais_str}' no es válido.")
+        # 3. Está dentro de América del Sur?
+        exist_error, _, _ = evaluar_cotas_america(dataset_name, temp_file)
+        if exist_error:
             return False
 
-    # 6. Validar incertidumbre (si el dataset la usa)
-    col_rango = cols.get('coordenada_rango')
-    if col_rango and col_rango in record:
-        rango_str = record[col_rango]
-        if rango_str != '':
-            try:
-                rango = float(rango_str)
-                if rango < 0 or rango > 100:
-                    print("Error: Incertidumbre fuera de rango (0-100).")
-                    return False
-            except ValueError:
-                print("Error: Incertidumbre no es un valor numérico.")
+        # 4. Validar fechas
+        _, _, exist_error = validar_fechas(dataset_name, temp_file)
+        if exist_error:
+            return False
+
+        # 5. Validar countryCode
+        exist_error = verificar_countryCode(dataset_name, temp_file)
+        if exist_error:
+            return False
+
+        # 6. Validar incertidumbre
+        if TRADUCTOR_DATASETS[dataset_name]['coordenada_rango'] != '':
+            exist_error = verificar_incertidumbre(dataset_name, temp_file)
+            if exist_error:
                 return False
 
-    # 7. Validar datos taxonómicos
-    for col_tax in cols.get('taxonomica', []):
-        if record.get(col_tax, '') == '':
-            print(f"Error: Campo taxonómico '{col_tax}' está vacío.")
+        # 7. Validar datos taxonómicos
+        cant_errores = errores_taxonomicos(dataset_name, temp_file)
+        if cant_errores > 0:
             return False
+
+    finally:
+        # Eliminamos el archivo temporal
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
 
     return True
+
+
