@@ -2,7 +2,7 @@ from pathlib import Path
 from datetime import datetime
 import csv
 import pycountry
-from lectura import count_records
+from src.lectura import count_records
 
 TRADUCTOR_DATASETS ={
     'iadiza': {
@@ -279,16 +279,14 @@ def verificar_incertidumbre(dataset,path):
         for fila in csv_reader:
             try:
                 rango = float(fila[colum_dataset["coordenada_rango"]])
-                if rango < 0: 
+                if rango <= 0 or rango >= 100:
                     fuera_rango += 1
                     exist_error = True
-                elif rango > 100:
-                    fuera_rango += 1
-                    exist_error = True
+                    list_ids.append(fila[colum_dataset["id"]])
             except ValueError:
                 no_dato += 1
                 exist_error = True
-        if exist_error: list_ids.append(fila[colum_dataset["id"]])
+                list_ids.append(fila[colum_dataset["id"]])
     result = {
         'dato_invalido' : fuera_rango,
         'no_dato' : no_dato,
@@ -300,30 +298,30 @@ def verificar_incertidumbre(dataset,path):
 #3.G
 def resumen_calidad(dataset,path):
     cant_regist = count_records(path)
-    cant_inv = validar_coordenadas(dataset,path)
-    cant_fechas = validar_fechas(dataset,path)
-    cant_dupli = verificar_duplicados(dataset,path)
-    cant_taxo = errores_taxonomicos(dataset,path)
+    result_coor = validar_coordenadas(dataset,path)
+    result_fechas = validar_fechas(dataset,path)
+    result_dupli = verificar_duplicados(dataset,path)
+    result_taxo = errores_taxonomicos(dataset,path)
+    total_fechas = result_fechas['anios_posteriores'] + result_fechas['fechas_invalidas']
     resumen = {
             'registro' : cant_regist,
-            'error_coordenadas' : cant_inv,
-            'error_fechas' : cant_fechas,
-            'duplicados' : cant_dupli,
-            'error_taxonomico' : cant_taxo
+            'error_coordenadas' : result_coor['cantidad_invalidos'],
+            'error_fechas' : total_fechas,
+            'duplicados' : result_dupli['cantidad_duplicados'],
+            'error_taxonomico' : result_taxo
     }
 
     # TITULO
     print("\n" + "*" * 50)
     print(f"RESUMEN DE CALIDAD DEL DATASET {dataset}")
     print("*" * 50)
-    total_fechas = resumen['error_fechas'][1] + resumen['error_fechas'][2]
-    # INFORMACION DE ERRORES
+       # INFORMACION DE ERRORES
     print(f"Cantidad total de registros analizados: {cant_regist}")
     print("-" * 50)
-    print(f"Cantidad de errores en las coordenadas 'latitud' y 'longitud': {resumen['error_coordenadas'][1]}")
+    print(f"Cantidad de errores en las coordenadas 'latitud' y 'longitud': {resumen['error_coordenadas']}")
     print(f"Cantidad de errores en las fechas: {total_fechas}")
-    print(f"Cantidad de datos duplicados: {resumen['duplicados'][1]}")
-    print(f"Cantidad de registros con informacion taxonomica incompleta: {resumen['error_taxonomico']}")
+    print(f"Cantidad de datos duplicados: {resumen['duplicados']}")
+    print(f"Cantidad de registros con informacion taxonomica incompleta: {result_taxo}")
 
     
     return resumen
@@ -345,13 +343,14 @@ def evaluar_cotas_america(dataset,path,lat = False, lon = False):
         for fila in csv_reader:
             valor_lat = fila[colum_dataset["latitud"]]
             valor_lon = fila[colum_dataset["longitud"]]
-            if evaluar_error(valor_lat,LATITUD_SUR,LATITUD_NORTE):
+            if evaluar_error(valor_lat,LATITUD_SUR,LATITUD_NORTE) and not lon:
                 lat_inv += 1
                 exist_error = True
-            if evaluar_error(valor_lon,LONGITUD_OESTE,LONGITUD_ESTE):
+                list_ids.append(fila[colum_dataset["id"]])
+            if evaluar_error(valor_lon,LONGITUD_OESTE,LONGITUD_ESTE) and not lat:
                 lon_inv += 1
                 exist_error = True
-        if exist_error: list_ids.append(fila[colum_dataset["id"]])
+                list_ids.append(fila[colum_dataset["id"]])
     if not lat and not lon:
         result = {
             'latitudes_invalidas' : lat_inv,
@@ -374,15 +373,23 @@ def evaluar_cotas_america(dataset,path,lat = False, lon = False):
     return result
 
 #3.I 
-def validar_longitud(dato, path):
-    resultado_cotas = evaluar_cotas_america(dato,path,lon=True)
-    resultado_coordenadas = validar_coordenadas(dato,path,lon=True)
-    return resultado_cotas, resultado_coordenadas
+def validar_longitud(dataset, path):
+    result_cotas = evaluar_cotas_america(dataset,path,lon=True)
+    result_coor = validar_coordenadas(dataset,path,lon=True)
+    resultado_lon = {
+        'resultado_cotas' : result_cotas,
+        'resultado_coordenadas' : result_coor
+    }
+    return resultado_lon
 
-def validar_latitud(dato,path):
-    resultado_cotas = evaluar_cotas_america(dato,path,lat=True)
-    resultado_coordenadas = validar_coordenadas(dato,path,lat=True)
-    return resultado_cotas,resultado_coordenadas
+def validar_latitud(dataset,path):
+    result_cotas = evaluar_cotas_america(dataset,path,lat=True)
+    result_coor = validar_coordenadas(dataset,path,lat=True)
+    resultado_lat = {
+        'resultado_cotas' : result_cotas,
+        'resultado_coordenadas' : result_coor
+    }
+    return resultado_lat
 
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
