@@ -2,7 +2,7 @@ import csv
 import random
 import os
 import contextlib
-from validaciones import (
+from src.validaciones import (
     TRADUCTOR_DATASETS,
     validar_coordenadas,
     constatar_coordenadas,
