@@ -1,7 +1,6 @@
 import csv
 import random
 import os
-import contextlib
 from src.validaciones import (
     TRADUCTOR_DATASETS,
     validar_coordenadas,
@@ -155,6 +154,20 @@ def format_record_for_insertion(record, dataset_name, filepath):
             record['occurrenceID'] = f"https://www.inaturalist.org/observations/{base_id}"
         if 'catalogNumber' in record:
             record['catalogNumber'] = str(base_id)
-
+            
+    elif dataset_name == 'xenocanto':
+        num_str = str(base_id)
+        record['id'] = f"{num_str}@XC"
+        if 'occurrenceID' in record:
+            record['occurrenceID'] = f"https://data.biodiversitydata.nl/xeno-canto/observation/XC{num_str}"
+        if 'catalogNumber' in record:
+            record['catalogNumber'] = f"XC{num_str}"
+            
+    elif dataset_name == 'iadiza':
+        catalog_num = str(base_id)[-6:].zfill(6)
+        record['gbifID'] = str(base_id)
+        if 'occurrenceID' in record:
+            record['occurrenceID'] = f"IADIZA:COI:{catalog_num}"
+        if 'catalogNumber' in record:
+            record['catalogNumber'] = catalog_num
     return record
-
