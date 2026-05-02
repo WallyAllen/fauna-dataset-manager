@@ -105,4 +105,36 @@ def validate_record(record, dataset_name):
 
     return True
 
+def get_next_base_id(dataset_name, filepath):
+    """
+    Lee el archivo del dataset para encontrar el ID máximo actual y retorna el siguiente
+    número autoincremental.
+    """
+    id_col = TRADUCTOR_DATASETS[dataset_name]['id']
+    delim = TRADUCTOR_DATASETS[dataset_name]['delimitador']
+    max_id = 0
+    
+    with open(filepath, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f, delimiter=delim)
+        for row in reader:
+            val = row.get(id_col, '')
+            if not val:
+                continue
+                
+            # Extraer solo el número de ID
+            if dataset_name == 'xenocanto':
+                val = val.replace('@XC', '')
+                
+            try:
+                num = int(val)
+                if num > max_id:
+                    max_id = num
+            except ValueError:
+                pass
+                
+    # Si el archivo estuviese vacío, asignamos un número base inicial
+    if max_id == 0:
+        return 1000000
+        
+    return max_id + 1
 
