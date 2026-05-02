@@ -178,6 +178,8 @@ def insert_record(dataset_name, in_filepath, out_filepath):
     """
     Lee el dataset original para obtener su estructura.
     Agrega un nuevo registro solicitando por teclado los datos esenciales.
+    Valida y formatea el registro.
+    Escribe un nuevo archivo conservando la estructura e incluyendo el nuevo registro.
     """
     if dataset_name not in TRADUCTOR_DATASETS:
         print(f"Dataset '{dataset_name}' no reconocido.")
@@ -205,5 +207,33 @@ def insert_record(dataset_name, in_filepath, out_filepath):
     for col in columnas_esenciales:
         if col in record:
             record[col] = input(f"Ingrese valor para {col}: ")
-
+            
+    # Validar el registro ingresado
+    print("Validando registro")
+    if not validate_record(record, dataset_name):
+        print("El registro ingresado no cumple con las validaciones.")
+        return False
+        
+    # Añadir los IDs correspondientes
+    record = format_record_for_insertion(record, dataset_name, in_filepath)
+    
+    # Lectura del original y escritura del nuevo archivo
+    os.makedirs(os.path.dirname(out_filepath), exist_ok=True)
+    
+    # Obtiene las columnas originales para el DictWriter
+    with open(in_filepath, 'r', encoding='utf-8') as fin:
+        reader = csv.DictReader(fin, delimiter=delim)
+        fieldnames = reader.fieldnames
+        
+    print("Creando nuevo archivo")
+    with open(in_filepath, 'r', encoding='utf-8') as fin, open(out_filepath, 'w', encoding='utf-8') as fout:
+        for line in fin:
+            fout.write(line)
+            
+    print("Anexando el nuevo registro al final")
+    with open(out_filepath, 'a', encoding='utf-8', newline='') as fout:
+        writer = csv.DictWriter(fout, fieldnames=fieldnames, delimiter=delim)
+        writer.writerow(record)
+        
+    print(f"Archivo generado en: {out_filepath}")
     return True
