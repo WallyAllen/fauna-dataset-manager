@@ -62,39 +62,41 @@ def validate_record(record, dataset_name):
             writer.writerow(record)
             
         # 1. Validar coordenadas
-        exist_error, _, _ = validar_coordenadas(dataset_name, temp_file)
-        if exist_error:
+        res_coord = validar_coordenadas(dataset_name, temp_file)
+        if res_coord.get('existe_error', False):
             return False
             
         # 2. Inconsistencia de coordenadas
-        exist_error, _, _ = constatar_coordenadas(dataset_name, temp_file)
-        if exist_error:
+        res_inc = constatar_coordenadas(dataset_name, temp_file)
+        if res_inc.get('existe_error', False):
             return False
 
         # 3. Está dentro de América del Sur?
-        exist_error, _, _ = evaluar_cotas_america(dataset_name, temp_file)
-        if exist_error:
+        res_cotas = evaluar_cotas_america(dataset_name, temp_file)
+        if res_cotas.get('existe_error', False):
             return False
 
         # 4. Validar fechas
-        _, _, exist_error = validar_fechas(dataset_name, temp_file)
-        if exist_error:
+        res_fechas = validar_fechas(dataset_name, temp_file)
+        if res_fechas.get('existe_error', False):
             return False
 
         # 5. Validar countryCode
-        exist_error = verificar_countryCode(dataset_name, temp_file)
-        if exist_error:
+        res_cc = verificar_countryCode(dataset_name, temp_file)
+        if res_cc.get('existe_error', False):
             return False
 
         # 6. Validar incertidumbre
         if TRADUCTOR_DATASETS[dataset_name]['coordenada_rango'] != '':
-            exist_error = verificar_incertidumbre(dataset_name, temp_file)
-            if exist_error:
+            res_incert = verificar_incertidumbre(dataset_name, temp_file)
+            if res_incert.get('existe_error', False):
                 return False
 
         # 7. Validar datos taxonómicos
         cant_errores = errores_taxonomicos(dataset_name, temp_file)
-        if cant_errores > 0:
+        if isinstance(cant_errores, dict) and cant_errores.get('existe_error', False):
+            return False
+        elif isinstance(cant_errores, int) and cant_errores > 0:
             return False
 
     finally:
@@ -203,4 +205,5 @@ def insert_record(dataset_name, in_filepath, out_filepath):
     for col in columnas_esenciales:
         if col in record:
             record[col] = input(f"Ingrese valor para {col}: ")
+
     return True
