@@ -4,3 +4,4 @@ processed_datasets/
 *.txt
 *.zip
 __pycache__/
+logs/*.log

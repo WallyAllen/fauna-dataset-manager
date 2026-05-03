@@ -244,16 +244,18 @@ def verificar_countryCode(dataset,path):
     list_ids = []
     print("Evaluando errores en el campo 'countryCode' del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
-            print(f"El dataset {dataset} no existe")
-            return
-    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+        raise ValueError(
+            f"Dataset '{dataset}' no reconocido. "
+            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+        )
+    colum_dataset = TRADUCTOR_DATASETS[dataset]
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
         for fila in csv_reader:
             pais = pycountry.countries.get(alpha_2=fila[colum_dataset["pais"]])
             if pais == None:
-                print(f"El codigo {fila[colum_dataset["pais"]]} no es valido")
+                print(f"El codigo {fila[colum_dataset['pais']]} no es valido")
                 exist_error = True
                 list_ids.append(fila[colum_dataset["id"]])
     result = {
@@ -343,9 +345,11 @@ def evaluar_cotas_america(dataset,path,lat = False, lon = False):
     exist_error = False
     print("Evaluando cotas de coordenadas (America del sur) del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
-            print(f"El dataset {dataset} no existe")
-            return exist_error
-    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+        raise ValueError(
+            f"Dataset '{dataset}' no reconocido. "
+            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+        )
+    colum_dataset = TRADUCTOR_DATASETS[dataset]
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
@@ -360,26 +364,25 @@ def evaluar_cotas_america(dataset,path,lat = False, lon = False):
                 lon_inv += 1
                 exist_error = True
                 list_ids.append(fila[colum_dataset["id"]])
-    if not lat and not lon:
-        result = {
-            'latitudes_invalidas' : lat_inv,
-            'longitudes_invalidas' : lon_inv,
-            'lista_ids' : list_ids,
-            'existe_error' : exist_error
-        }
     if lat:
-        result = {
+        return {
             'latitudes_invalidas' : lat_inv,
             'lista_ids' : list_ids,
             'existe_error' : exist_error
         }
     elif lon:
-        result = {
+        return {
             'longitudes_invalidas' : lon_inv,
             'lista_ids' : list_ids,
             'existe_error' : exist_error
-            }
-    return result
+        }
+    else:
+        return {
+            'latitudes_invalidas' : lat_inv,
+            'longitudes_invalidas' : lon_inv,
+            'lista_ids' : list_ids,
+            'existe_error' : exist_error
+        }
 
 #3.I 
 def validar_longitud(dataset, path):
@@ -451,12 +454,12 @@ if __name__ == "__main__":
     print(f"Cantidad de datos invalidos:{resultado["longitudes_invalidas"]}")
     """
     resultado_latitud = validar_latitud(dato,file_route)
-    if resultado_latitud[0]["existe_error"]:
-        print("Funco latitud")
-    if resultado_latitud[1]["existe_error"]:
-        print("Funco latitud 2")
+    if resultado_latitud['resultado_cotas']['existe_error']:
+        print("Funco latitud cotas")
+    if resultado_latitud['resultado_coordenadas']['existe_error']:
+        print("Funco latitud coordenadas")
     resultado_longitud = validar_longitud(dato,file_route)
-    if resultado_longitud[0]["existe_error"]:
-        print("Funco longitud")
-    if resultado_longitud[1]["existe_error"]:
-        print("FUnc longitud 2")
+    if resultado_longitud['resultado_cotas']['existe_error']:
+        print("Funco longitud cotas")
+    if resultado_longitud['resultado_coordenadas']['existe_error']:
+        print("Funco longitud coordenadas")

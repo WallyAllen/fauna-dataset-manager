@@ -1,7 +1,8 @@
-import validaciones
 import csv
 import os
 from log_operaciones import log
+from src import validaciones
+from src.log_operaciones import log
 
 TRADUCTOR_DATASETS = validaciones.TRADUCTOR_DATASETS
 
@@ -59,13 +60,13 @@ def actualizar_registros(ruta_archivo, ruta_salida, identificador, columnaID, va
 
     ruta_temporal = ruta_salida + ".temp" # creo una ruta temporal para poder operar       
             
+    afectados = 0
     try:
         with open(ruta_archivo, mode= 'r', encoding= 'utf-8') as archivo_lectura, open(ruta_temporal, mode='w', newline='', encoding='utf-8') as archivo_escritura:
             # abro tanto el archivo que estoy leyendo como el nuevo que voy a modificar (ya que no podemos modificar los raw)
             lector = csv.DictReader(archivo_lectura, delimiter = delimitador)
             nombres_columnas = lector.fieldnames 
             escritor = csv.DictWriter(archivo_escritura, fieldnames = nombres_columnas, delimiter = delimitador)
-            afectados = 0     
             # creo el encabezado
             escritor.writeheader()
             # itero hasta encontrar lo que quiero modificar
@@ -78,38 +79,44 @@ def actualizar_registros(ruta_archivo, ruta_salida, identificador, columnaID, va
                     afectados += 1
                 # guardo la fila se haya modificado o no
                 escritor.writerow(fila)
-        
-        # validaciones sobre el archivo temporal
-        no_valido = False
-        if dataset is not None:
-            config = _obtener_config_dataset(dataset)
-            if config['latitud'] in valores_nuevos_traducidos or config['longitud'] in valores_nuevos_traducidos:
-                res = validaciones.validar_coordenadas(dataset, ruta_temporal)
-                if res.get('existe_error'):
-                    no_valido = True
-            if config['fecha'] in valores_nuevos_traducidos:
-                res = validaciones.validar_fechas(dataset, ruta_temporal)
-                if res.get('existe_error'):
-                    no_valido = True
-            if config['pais'] in valores_nuevos_traducidos:
-                res = validaciones.verificar_countryCode(dataset, ruta_temporal)
-                if res and res.get('existe_error'):
-                    no_valido = True
-            if config['coordenada_rango'] and config['coordenada_rango'] in valores_nuevos_traducidos:
-                res = validaciones.verificar_incertidumbre(dataset, ruta_temporal)
-                if res.get('existe_error'):
-                    no_valido = True
 
-        if not no_valido:
-            os.replace(ruta_temporal, ruta_salida)
-            if afectados > 0 and dataset is not None:
-                log(dataset, "UPDATE", afectados)
-        else:
-            print(f"Error al actualizar el registro '{identificador}'")
-            if dataset is not None:
-                log(dataset, "UPDATE", 0, status="ERROR")
+        if afectados == 0:
             if os.path.exists(ruta_temporal):
                 os.remove(ruta_temporal)
+            if dataset is not None:
+                log(dataset, "UPDATE", 0, status="ERROR")
+        else:
+            # validaciones sobre el archivo temporal (solo si hubo filas modificadas)
+            no_valido = False
+            if dataset is not None:
+                config = _obtener_config_dataset(dataset)
+                if config['latitud'] in valores_nuevos_traducidos or config['longitud'] in valores_nuevos_traducidos:
+                    res = validaciones.validar_coordenadas(dataset, ruta_temporal)
+                    if res.get('existe_error'):
+                        no_valido = True
+                if config['fecha'] in valores_nuevos_traducidos:
+                    res = validaciones.validar_fechas(dataset, ruta_temporal)
+                    if res.get('existe_error'):
+                        no_valido = True
+                if config['pais'] in valores_nuevos_traducidos:
+                    res = validaciones.verificar_countryCode(dataset, ruta_temporal)
+                    if res and res.get('existe_error'):
+                        no_valido = True
+                if config['coordenada_rango'] and config['coordenada_rango'] in valores_nuevos_traducidos:
+                    res = validaciones.verificar_incertidumbre(dataset, ruta_temporal)
+                    if res.get('existe_error'):
+                        no_valido = True
+
+            if not no_valido:
+                os.replace(ruta_temporal, ruta_salida)
+                if dataset is not None:
+                    log(dataset, "UPDATE", afectados)
+            else:
+                print(f"Error al actualizar el registro '{identificador}'")
+                if dataset is not None:
+                    log(dataset, "UPDATE", 0, status="ERROR")
+                if os.path.exists(ruta_temporal):
+                    os.remove(ruta_temporal)
 
     except FileNotFoundError: # como dice, en caso de no estar/encontrar el archivo
         print(f"Error: No se encontró el archivo en la ruta '{ruta_archivo}'.")

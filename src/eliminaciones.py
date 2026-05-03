@@ -1,7 +1,12 @@
 import csv
 import os
+<<<<<<< HEAD
 import validaciones
 from log_operaciones import log
+=======
+from src import validaciones
+from src.log_operaciones import log
+>>>>>>> 12c0dab519a95da918aa84818b92f93317f12657
 
 def _obtener_config_dataset(dataset):
     if dataset not in validaciones.TRADUCTOR_DATASETS:
