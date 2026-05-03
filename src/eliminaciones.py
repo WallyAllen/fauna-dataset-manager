@@ -124,6 +124,8 @@ def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t
     # inicializo contadores
     registros_leidos = 0
     registros_eliminados = 0
+    #diccionario para agrupar motivos 
+    motivos_eliminacion = {}
     try:
         # Abrimos origen y destino temporal
         with open(ruta_entrada, mode='r', encoding='utf-8') as archivo_lectura, open(ruta_temporal, mode='w', encoding='utf-8') as archivo_escritura:
@@ -134,33 +136,51 @@ def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t
             for fila in lector:
                 registros_leidos += 1
                 es_valido = True 
-                # aplico validaciones
-                if "decimalLatitude" in fila or "decimalLongitude" in fila:
+                # aplico validaciones y agrego and para reducir procesamiento
+                if ("decimalLatitude" in fila or "decimalLongitude" in fila) and es_valido:
                     if not validaciones.validar_coordenadas(nombre_dataset, ruta_entrada, delimitador):
                         es_valido = False
-                if "eventDate" in fila:
+                        motivo_falla = "Error en Coordenadas"
+                if "eventDate" in fila and es_valido:
                     if not validaciones.validar_fechas(nombre_dataset, ruta_entrada, delimitador):
                         es_valido = False
-                if "countryCode" in fila:
+                        motivo_falla = "Error en Fechas"
+                if "countryCode" in fila and es_valido:
                     if not validaciones.verificar_countryCode(nombre_dataset, ruta_entrada, delimitador):
                         es_valido = False
-                if "coordinateUncertaintyInMeters" in fila:
+                        motivo_falla = "Error en Código de País"
+                if "coordinateUncertaintyInMeters" in fila and es_valido:
                     if not validaciones.verificar_incertidumbre(nombre_dataset, ruta_entrada, delimitador):
                         es_valido = False
+                        motivo_falla = "Error en Incertidumbre" 
                 if es_valido:
                     # si el registro esta ok, lo escribo en el .temp
                     escritor.writerow(fila)
                 else:
                     # si contiene errores lo omito y aumento registros_eliminados
                     registros_eliminados += 1
+                    if motivo_falla in motivos_eliminacion:
+                        motivos_eliminacion[motivo_falla] += 1
+                    else:
+                        motivos_eliminacion[motivo_falla] = 1
                     #post sanitizar, reemplazo la ruta de salida por el .temp
         os.replace(ruta_temporal, ruta_salida)
+        if registros_leidos > 0:
+            porcentaje = (registros_eliminados / registros_leidos) * 100
+        else:
+            porcentaje = 0.0
         #un poquito de magia estetica para la consola
         print("====================================================")
         print(f"Sanitización de '{nombre_dataset}' finalizada")
         print(f"Registros analizados: {registros_leidos}")
         print(f"Registros eliminados (con errores): {registros_eliminados}")
         print(f"Registros limpios guardados: {registros_leidos - registros_eliminados}")
+        print(f"Registros eliminados: {registros_eliminados} ({porcentaje:.2f}% del total)")
+        if registros_eliminados > 0:
+            print("\nMotivos de eliminación detallados:")
+            for motivo, cantidad in motivos_eliminacion.items():
+                porcentaje_motivo = (cantidad / registros_eliminados) * 100
+                print(f" - {motivo}: {cantidad} registros ({porcentaje_motivo:.1f}%)")
         print("====================================================")
     except FileNotFoundError:
         print(f"Error: No se encontro el dataset original en '{ruta_entrada}'")
