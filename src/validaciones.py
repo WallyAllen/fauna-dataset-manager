@@ -244,9 +244,11 @@ def verificar_countryCode(dataset,path):
     list_ids = []
     print("Evaluando errores en el campo 'countryCode' del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
-            print(f"El dataset {dataset} no existe")
-            return
-    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+        raise ValueError(
+            f"Dataset '{dataset}' no reconocido. "
+            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+        )
+    colum_dataset = TRADUCTOR_DATASETS[dataset]
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
