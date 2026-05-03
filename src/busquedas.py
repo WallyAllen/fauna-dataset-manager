@@ -1,7 +1,7 @@
 import validaciones
 import csv
 import os
-from src.log_operaciones import log
+from log_operaciones import log
 
 TRADUCTOR_DATASETS = validaciones.TRADUCTOR_DATASETS
 
