@@ -2,8 +2,11 @@ from pathlib import Path
 from datetime import datetime
 import csv
 import pycountry
+from src.lectura import count_records
+
 TRADUCTOR_DATASETS ={
-    'aidiza': {
+    'iadiza': {
+        'delimitador' : '\t',
         'latitud' : 'decimalLatitude',
         'longitud' : 'decimalLongitude',
         'fecha' : 'eventDate',
@@ -15,6 +18,7 @@ TRADUCTOR_DATASETS ={
                         'specificEpithet','taxonRank'] 
     },
     'inaturalist': {
+        'delimitador' : ',',
         'latitud' : 'decimalLatitude',
         'longitud' : 'decimalLongitude',
         'fecha' : 'eventDate',
@@ -26,6 +30,7 @@ TRADUCTOR_DATASETS ={
                         'class','order','family','genus']
     },
     'xenocanto' : {
+        'delimitador' : ',',
         'latitud' : 'latitudeDecimal',
         'longitud' : 'longitudeDecimal',
         'fecha' : 'eventDate',
@@ -40,225 +45,409 @@ TRADUCTOR_DATASETS ={
     }
 
 }
-# Funcion para abrir el archivo con el path enviado
-def evaluar_error(valor,parametro_neg,parametro_pos):
-    error = False
-    if valor != '':
-                colum_vacia = False
-                # Utilizo el try/except para valores que no son numeros
-                try:
-                    coord = float(valor)
-                    # La funcion evaluar_error devuelve True si encuentra un error
-                    if coord < parametro_neg or coord > parametro_pos:
-                        error = True
-                except (ValueError, TypeError):
-                    error = True
-    return error
-# 3.A
-def validar_coordenadas(dataset,path,delimitador):
-    cant_inv = 0
-    list_inv = []
-    colum_vacia = True
-    print("Buscando errores en los datos de latitud...")
-    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
+
+LATITUD_NORTE = 13
+LATITUD_SUR = -56.5
+LONGITUD_ESTE = -34.5
+LONGITUD_OESTE = -92
+
+# Evaluar error de medicion de coordenada 
+def evaluar_error(valor, parametro_neg, parametro_pos):
+    """
+    Retorna True si el valor es inválido para el rango dado.
+    Campos vacíos no se consideran error.
+    """
+    if valor == '' or valor is None:
+        return False
+    
+    try:
+        coord = float(valor)
+        return coord < parametro_neg or coord > parametro_pos
+    except (ValueError, TypeError):
+        return True
+
+# Evaluar errores taxonomicos
+def errores_taxonomicos(dataset,path):
+    cant_errores = 0
+    print("Buscando errores en los datos taxonomicos...")
+ 
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
-            return cant_inv, list_inv
+            return cant_errores
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
     
-    with open(path, "r") as file:
-        try:
-            csv_reader = csv.DictReader(file,delimiter = delimitador)
-        except TypeError:
-            print("Ingrese un delimitador valido")
-            return cant_inv, list_inv
-       
-        # Recorre la columna enviada para buscar errores
+    with open(path, "r", encoding="utf-8") as file:
+        csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
         for fila in csv_reader:
-        # Evaluo si existe un valor en ese registro
+            for i in range(len(colum_dataset["taxonomica"])):
+                if fila[colum_dataset["taxonomica"][i]] == "":
+                    cant_errores += 1
+
+    return cant_errores
+
+# 3.A
+def validar_coordenadas(dataset, path,lat = False, lon = False):
+    """
+    Ejercicio 3.A
+    Detecta registros con coordenadas geográficas inválidas.
+
+    Args:
+        dataset (str): Nombre del dataset ('iadiza', 'inaturalist', 'xenocanto')
+        path (str | Path): Ruta al archivo CSV
+        delimitador (str): Separador de campos del archivo
+
+    Returns:
+        tuple:
+            - exist_error (bool): True si hay al menos un registro inválido
+            - cant_inv (int): Cantidad de REGISTROS inválidos
+            - list_inv (list[str]): IDs de los registros inválidos
+
+    Raises:
+        ValueError: Si el dataset no está en TRADUCTOR_DATASETS
+        ValueError: Si el delimitador no es un string de un carácter
+    """
+
+    if dataset not in TRADUCTOR_DATASETS:
+        raise ValueError(
+            f"Dataset '{dataset}' no reconocido. "
+            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+        )
+
+    colum_dataset = TRADUCTOR_DATASETS[dataset]
+    cant_inv = 0
+    list_inv = []
+    exist_error = False
+    result = {}
+
+    with open(path, "r", encoding="utf-8") as file:
+        csv_reader = csv.DictReader(file, delimiter=colum_dataset['delimitador'])
+
+        for fila in csv_reader:
             valor_lat = fila[colum_dataset["latitud"]]
             valor_lon = fila[colum_dataset["longitud"]]
-            if evaluar_error(valor_lat, -90, 90):
-                colum_vacia = False
+            if not lat and not lon:
+                lat_invalida = evaluar_error(valor_lat, -90, 90)
+                lon_invalida = evaluar_error(valor_lon, -180, 180)
+            if lat:
+                lat_invalida = evaluar_error(valor_lat, -90, 90)
+                lon_invalida = False
+            elif lon:
+                lon_invalida = evaluar_error(valor_lon, -180, 180)
+                lat_invalida = False
+
+            if lat_invalida or lon_invalida:
                 cant_inv += 1
-                list_inv.append(valor_lat)
-            if evaluar_error(valor_lon, -180, 180):
-                colum_vacia = False
-                cant_inv += 1
-                list_inv.append(valor_lon)
-    if colum_vacia:
-        print("No existen valores en la columna o la columna enviada en invalida")
-    return cant_inv, list_inv
+                exist_error = True
+                list_inv.append(fila[colum_dataset["id"]])
+    result ={
+        'cantidad_invalidos' : cant_inv,
+        'lista_invalidos' : list_inv,
+        'existe_error' : exist_error
+    }
+    return result
 
 #3.B
-def constatar_coordenadas(dataset,path,delimitador):
-    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
-    colum_vacia = True
+def constatar_coordenadas(dataset,path):
+    exist_error = False
+    cant_inconsistentes = 0
+    list_ids = []
     print("Evaluando inconsistencias en las coordenadas...")
     if dataset not in TRADUCTOR_DATASETS.keys():
-            print(f"El dataset {dataset} no existe")
-            return
+            raise ValueError(
+                f"Dataset '{dataset}' no reconocido. "
+                f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+            )
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
-    with open(path, "r") as file:
-        try:
-            csv_reader = csv.DictReader(file,delimiter = delimitador)
-        except TypeError:
-            print("Ingrese un delimitador valido")
-
+    with open(path, "r", encoding="utf-8") as file:
+        csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
         for fila in csv_reader:
-            if  fila[colum_dataset["latitud"]] == '' and fila[colum_dataset["longitud"]] == '':
-                pass
-                colum_vacia = False
-                print(f"Existe una inconsistencia en ambos registros -- linea {csv_reader.line_num} ")
-            elif fila[colum_dataset["latitud"]] == '' or fila[colum_dataset["longitud"]] == '':
-                colum_vacia = False
-                print(f"Existe una inconsistencia en un registro -- linea {csv_reader.line_num}")
-        if colum_vacia: print("No existen inconsistencia en las columnas")
-    return
+            lat = fila[colum_dataset["latitud"]]
+            lon = fila[colum_dataset["longitud"]]
+            if (lat == '') != (lon == ''):  # XOR: inconsistencia solo si UNA está vacía
+                cant_inconsistentes +=1
+                exist_error = True
+                list_ids.append(fila[colum_dataset["id"]])
+    result = {
+        'cantidad_inconsistencias' : cant_inconsistentes,
+        'lista_ids' : list_ids,
+        'existe_error' : exist_error
+    }
+    return result
 
 #3.C
-def validar_fechas(dataset,path,delimitador):
-    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
+def validar_fechas(dataset,path):
     anio_post = 0
-    cant = 0
-    colum_vacia = True
+    fecha_inv = 0
+    exist_error = False
     print("Evaluando fechas del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
-            return
+            return anio_post,fecha_inv,exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
-    with open(path, "r") as file:
-        try:
-            csv_reader = csv.DictReader(file,delimiter = delimitador)
-        except TypeError:
-            print("Ingrese un delimitador valido")
+    with open(path, "r", encoding="utf-8") as file:
+        csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
         for fila in csv_reader:
             try:
                 #convierte el string formate ISO en un dato tipo datetime
                 fecha = datetime.fromisoformat(fila[colum_dataset["fecha"]])
-                if fecha.year > 2026: anio_post += 1
+                if fecha.year > 2026: 
+                    anio_post += 1
+                    exist_error = True
             #Si la fecha no concuerda con el formate ISO significa que es una fecha invalida
             except (ValueError,TypeError):
-                cant += 1
+                fecha_inv += 1
+                exist_error = True
                 #print("La fecha posee un formato invalido o no se puede interpretar como una")
-        print(F"La cantidad de fechas invalidas son {cant}")
-    return anio_post
+    result = {
+        'anios_posteriores' : anio_post,
+        'fechas_invalidas' : fecha_inv,
+        'existe_error' : exist_error
+    }
+    return result
 
 #3.D
-def verificar_duplicados(dataset,path,delimitador):
-    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
-    colum_vacia = True
+def verificar_duplicados(dataset,path):
     duplicados = []
     cant_dupli = 0
+    exist_error = False
     set_id = set()
 
     print("Evaluando registros repetidos del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
-            return cant_dupli, duplicados
+            return cant_dupli, duplicados,exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
 
-    with open(path, "r") as file:
-        try:
-            csv_reader = csv.DictReader(file,delimiter = delimitador)
-        except TypeError:
-            print("Ingrese un delimitador valido")
+    with open(path, "r", encoding="utf-8") as file:
+        csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
         for fila in csv_reader:
             if fila[colum_dataset["id"]] in set_id:
                 duplicados.append(fila[colum_dataset["id"]])
                 cant_dupli += 1
+                exist_error = True
             else:
-                set_id.add(fila[colum_dataset["id"]]) 
-    return cant_dupli, duplicados
+                set_id.add(fila[colum_dataset["id"]])
+    result = {
+        'cantidad_duplicados' : cant_dupli,
+        'id_duplicados' : duplicados,
+        'existe_error' : exist_error
+    }
+    return result
 
 #3.E
-def verificar_countryCode(dataset,path,delimitador):
-    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
-    colum_vacia = True
-
+def verificar_countryCode(dataset,path):
+    exist_error = False
+    list_ids = []
     print("Evaluando errores en el campo 'countryCode' del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
             return
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
-    with open(path, "r") as file:
-        try:
-            csv_reader = csv.DictReader(file,delimiter = delimitador)
-        except TypeError:
-            print("Ingrese un delimitador valido")
+    with open(path, "r", encoding="utf-8") as file:
+        csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
         for fila in csv_reader:
             pais = pycountry.countries.get(alpha_2=fila[colum_dataset["pais"]])
             if pais == None:
                 print(f"El codigo {fila[colum_dataset["pais"]]} no es valido")
-    return
+                exist_error = True
+                list_ids.append(fila[colum_dataset["id"]])
+    result = {
+        'lista_ids' : list_ids,
+        'existe_error' : exist_error
+    }
+    return result
 
 #3.F
-def verificar_incertidumbre(dataset,path,delimitador):
-    if delimitador == "\\t" or delimitador == "/t" : delimitador = "\t"
-    colum_vacia = True
-
+def verificar_incertidumbre(dataset,path):
+    fuera_rango = 0
+    no_dato = 0
+    exist_error = False
+    list_ids = []
     print("Evaluando errores en el campo 'coordinateUncertainyInMeters' del dataset...")
     if dataset not in TRADUCTOR_DATASETS.keys():
             print(f"El dataset {dataset} no existe")
-            return
+            return exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
-    with open(path, "r") as file:
-        try:
-            csv_reader = csv.DictReader(file,delimiter = delimitador)
-        except TypeError:
-            print("Ingrese un delimitador valido")
+    with open(path, "r", encoding="utf-8") as file:
+        csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
         for fila in csv_reader:
             try:
                 rango = float(fila[colum_dataset["coordenada_rango"]])
-                if rango < 0: 
-                    print(f"El valor {rango} no es valido")
-                elif rango > 100:
-                    print(f"El valor {rango} no es valido")
+                if rango <= 0 or rango >= 100:
+                    fuera_rango += 1
+                    exist_error = True
+                    list_ids.append(fila[colum_dataset["id"]])
             except ValueError:
-                print(f"El dato {fila[colum_dataset["coordenada_rango"]]} no es un dato numerico")
-    return
+                no_dato += 1
+                exist_error = True
+                list_ids.append(fila[colum_dataset["id"]])
+    result = {
+        'dato_invalido' : fuera_rango,
+        'no_dato' : no_dato,
+        'lista_ids' : list_ids,
+        'existe_error' : exist_error
+    }
+    return result
 
 #3.G
+def resumen_calidad(dataset,path):
+    cant_regist = count_records(path)
+    result_coor = validar_coordenadas(dataset,path)
+    result_fechas = validar_fechas(dataset,path)
+    result_dupli = verificar_duplicados(dataset,path)
+    result_taxo = errores_taxonomicos(dataset,path)
+    total_fechas = result_fechas['anios_posteriores'] + result_fechas['fechas_invalidas']
+    resumen = {
+            'registro' : cant_regist,
+            'error_coordenadas' : result_coor['cantidad_invalidos'],
+            'error_fechas' : total_fechas,
+            'duplicados' : result_dupli['cantidad_duplicados'],
+            'error_taxonomico' : result_taxo
+    }
+
+    # TITULO
+    print("\n" + "*" * 50)
+    print(f"RESUMEN DE CALIDAD DEL DATASET {dataset}")
+    print("*" * 50)
+       # INFORMACION DE ERRORES
+    print(f"Cantidad total de registros analizados: {cant_regist}")
+    print("-" * 50)
+    print(f"Cantidad de errores en las coordenadas 'latitud' y 'longitud': {resumen['error_coordenadas']}")
+    print(f"Cantidad de errores en las fechas: {total_fechas}")
+    print(f"Cantidad de datos duplicados: {resumen['duplicados']}")
+    print(f"Cantidad de registros con informacion taxonomica incompleta: {result_taxo}")
+
+    
+    return resumen
+
+#3.H
+def evaluar_cotas_america(dataset,path,lat = False, lon = False):
+    lat_inv = 0
+    lon_inv = 0
+    list_ids = []
+    exist_error = False
+    print("Evaluando cotas de coordenadas (America del sur) del dataset...")
+    if dataset not in TRADUCTOR_DATASETS.keys():
+            print(f"El dataset {dataset} no existe")
+            return exist_error
+    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+    with open(path, "r", encoding="utf-8") as file:
+        csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
+
+        for fila in csv_reader:
+            valor_lat = fila[colum_dataset["latitud"]]
+            valor_lon = fila[colum_dataset["longitud"]]
+            if evaluar_error(valor_lat,LATITUD_SUR,LATITUD_NORTE) and not lon:
+                lat_inv += 1
+                exist_error = True
+                list_ids.append(fila[colum_dataset["id"]])
+            if evaluar_error(valor_lon,LONGITUD_OESTE,LONGITUD_ESTE) and not lat:
+                lon_inv += 1
+                exist_error = True
+                list_ids.append(fila[colum_dataset["id"]])
+    if not lat and not lon:
+        result = {
+            'latitudes_invalidas' : lat_inv,
+            'longitudes_invalidas' : lon_inv,
+            'lista_ids' : list_ids,
+            'existe_error' : exist_error
+        }
+    if lat:
+        result = {
+            'latitudes_invalidas' : lat_inv,
+            'lista_ids' : list_ids,
+            'existe_error' : exist_error
+        }
+    elif lon:
+        result = {
+            'longitudes_invalidas' : lon_inv,
+            'lista_ids' : list_ids,
+            'existe_error' : exist_error
+            }
+    return result
+
+#3.I 
+def validar_longitud(dataset, path):
+    result_cotas = evaluar_cotas_america(dataset,path,lon=True)
+    result_coor = validar_coordenadas(dataset,path,lon=True)
+    resultado_lon = {
+        'resultado_cotas' : result_cotas,
+        'resultado_coordenadas' : result_coor
+    }
+    return resultado_lon
+
+def validar_latitud(dataset,path):
+    result_cotas = evaluar_cotas_america(dataset,path,lat=True)
+    result_coor = validar_coordenadas(dataset,path,lat=True)
+    resultado_lat = {
+        'resultado_cotas' : result_cotas,
+        'resultado_coordenadas' : result_coor
+    }
+    return resultado_lat
 
 #Bloque para probar las funciones de validacion
 if __name__ == "__main__":
-    def datos(dato,delimitador):
-        dato = input('Ingrese que dataset quiere verificar (aidiza - inaturalist - xenocanto):')
-        delimitador = input('Ingrese el delimitador del dataset:')
-        return dato,delimitador
+    def datos(dato):
+        dato = input('Ingrese que dataset quiere verificar (iadiza - inaturalist - xenocanto):')
+        return dato
 
     lista = []
     dato = ''
-    delimitador = ''
     cant = 0
     #Creo una variable con la ruta de archivo dinamica
     DIC_BASE = Path(__file__).resolve().parent.parent
 
     file_route = DIC_BASE / 'raw_datasets' / 'inaturalist-filtered' / 'observations.csv'
-    dato, delimitador = datos(dato,delimitador)
-    
-    cant, lista = validar_coordenadas(dato,file_route,delimitador)
-    print(f"La cantidad de registro invalidos son {cant}")
-    for i in range(len(lista)):
-        print(f"Los registros invalidos son {lista[i]}")
+    dato = datos(dato)
+    """
+    resultado = validar_coordenadas(dato,file_route)
+    print(f"La cantidad de registro invalidos son {resultado["cantidad_invalidos"]}")
+    for i in resultado["lista_invalidos"]:
+        print(f"Los registros invalidos son {i}")
 
-    
-    constatar_coordenadas(dato,file_route,delimitador)
+    resultado = constatar_coordenadas(dato,file_route)
+    print(f"La cantidad de inconsistencias son: {resultado["cantidad_inconsistencias"]}")
+    for i in resultado["lista_ids"]:
+        print(f"Los ids incosistentes son:{i}")
 
-    cant = validar_fechas(dato,file_route,delimitador)
-    print(f"La cantidad de fechas posteriores a 2026 son:{cant}")
+    resultado = validar_fechas(dato,file_route)
+    print(f"La cantidad de fechas posteriores a 2026 son:{resultado["anios_posteriores"]}")
 
-    cant,lista = verificar_duplicados(dato,file_route,delimitador)
-    for i in range(len(lista)):
-        print(f"Los IDS duplicados son :{lista[i]}")
-    print(f"La cantidad de datos duplicados son :{cant}")
+    resultado = verificar_duplicados(dato,file_route)
+    for i in resultado["id_duplicados"]:
+        print(f"Los IDS duplicados son :{i}")
+    print(f"La cantidad de datos duplicados son :{resultado["cantidad_duplicados"]}")
 
-    verificar_countryCode(dato,file_route,delimitador)
+    resultado = verificar_countryCode(dato,file_route)
+    for i in resultado["lista_ids"]:
+        print(f"Los IDS invalidos son:{i}")
 
-    verificar_incertidumbre(dato,file_route,delimitador)
+    resultado = verificar_incertidumbre(dato,file_route)
+    for i in resultado["lista_ids"]:
+        print(f"Los IDS invalidos son:{i}")
+
+    dict_resumen = resumen_calidad(dato,file_route)
+
+    resultado = evaluar_cotas_america(dato,file_route)
+    print(f"Cotas seteadas para la latitud -- NORTE:{LATITUD_NORTE} | SUR:{LATITUD_SUR}")
+    print(f"Cantidad de datos invalidos:{resultado["latidudes_invalidas"]}")
+    print("")
+    print(f"Cotas seteadas para la longitud -- ESTE:{LONGITUD_ESTE} | OESTE:{LONGITUD_OESTE}")
+    print(f"Cantidad de datos invalidos:{resultado["longitudes_invalidas"]}")
+    """
+    resultado_latitud = validar_latitud(dato,file_route)
+    if resultado_latitud[0]["existe_error"]:
+        print("Funco latitud")
+    if resultado_latitud[1]["existe_error"]:
+        print("Funco latitud 2")
+    resultado_longitud = validar_longitud(dato,file_route)
+    if resultado_longitud[0]["existe_error"]:
+        print("Funco longitud")
+    if resultado_longitud[1]["existe_error"]:
+        print("FUnc longitud 2")
