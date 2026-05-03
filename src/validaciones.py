@@ -273,13 +273,22 @@ def verificar_incertidumbre(dataset,path):
             print(f"El dataset {dataset} no existe")
             return exist_error
     else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+
+    if not colum_dataset['coordenada_rango']:
+        return {
+            'dato_invalido': 0,
+            'no_dato': 0,
+            'lista_ids': [],
+            'existe_error': False
+        }
+
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
         for fila in csv_reader:
             try:
                 rango = float(fila[colum_dataset["coordenada_rango"]])
-                if rango <= 0 or rango >= 100:
+                if rango < 0 or rango > 100:
                     fuera_rango += 1
                     exist_error = True
                     list_ids.append(fila[colum_dataset["id"]])
