@@ -8,7 +8,7 @@ def current_date():
     usando la zona horaria UTC-3 (Argentina).
 
     Returns:
-        str: Fecha y hora formatedas.
+        str: Fecha y hora formateadas.
     """
     tz_ar = dt.timezone(dt.timedelta(hours=-3))
     now = dt.datetime.now(tz_ar)
