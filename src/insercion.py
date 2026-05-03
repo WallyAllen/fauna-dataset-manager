@@ -11,7 +11,6 @@ from src.validaciones import (
     errores_taxonomicos,
     evaluar_cotas_america
 )
-from src.log_operaciones import log
 
 def create_record_structure(filepath, id_column='id', encoding='utf-8', delimiter='\t'):
     """
@@ -56,48 +55,69 @@ def validate_record(record, dataset_name):
     delim = TRADUCTOR_DATASETS[dataset_name]['delimitador']
     
     try:
+        # Copia el registro y le inyecta las llaves requeridas por validaciones.py
+        # que tal vez no existan en el CSV original (como phylum, class, etc. en xenocanto)
+        record_to_validate = record.copy()
+        for k, v in TRADUCTOR_DATASETS[dataset_name].items():
+            if k == 'delimitador': continue
+            if isinstance(v, list):
+                for campo in v:
+                    if campo and campo not in record_to_validate:
+                        record_to_validate[campo] = "N/A"
+            else:
+                if v and v not in record_to_validate:
+                    record_to_validate[v] = "N/A"
+                    
         # Escribimos el registro como un CSV de una fila
         with open(temp_file, 'w', encoding='utf-8', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=record.keys(), delimiter=delim)
+            writer = csv.DictWriter(f, fieldnames=record_to_validate.keys(), delimiter=delim)
             writer.writeheader()
-            writer.writerow(record)
+            writer.writerow(record_to_validate)
             
         # 1. Validar coordenadas
         res_coord = validar_coordenadas(dataset_name, temp_file)
         if res_coord.get('existe_error', False):
+            print("=> Falló la validación: Formato de Coordenadas")
             return False
             
         # 2. Inconsistencia de coordenadas
         res_inc = constatar_coordenadas(dataset_name, temp_file)
         if res_inc.get('existe_error', False):
+            print("=> Falló la validación: Inconsistencia de Coordenadas")
             return False
 
         # 3. Está dentro de América del Sur?
         res_cotas = evaluar_cotas_america(dataset_name, temp_file)
         if res_cotas.get('existe_error', False):
+            print("=> Falló la validación: Cotas de América del Sur")
             return False
 
         # 4. Validar fechas
         res_fechas = validar_fechas(dataset_name, temp_file)
         if res_fechas.get('existe_error', False):
+            print("=> Falló la validación: Formato de Fechas")
             return False
 
         # 5. Validar countryCode
         res_cc = verificar_countryCode(dataset_name, temp_file)
         if res_cc.get('existe_error', False):
+            print("=> Falló la validación: Código de País (countryCode)")
             return False
 
         # 6. Validar incertidumbre
         if TRADUCTOR_DATASETS[dataset_name]['coordenada_rango'] != '':
             res_incert = verificar_incertidumbre(dataset_name, temp_file)
             if res_incert.get('existe_error', False):
+                print("=> Falló la validación: Incertidumbre de Coordenadas")
                 return False
 
         # 7. Validar datos taxonómicos
         cant_errores = errores_taxonomicos(dataset_name, temp_file)
         if isinstance(cant_errores, dict) and cant_errores.get('existe_error', False):
+            print("=> Falló la validación: Datos Taxonómicos")
             return False
         elif isinstance(cant_errores, int) and cant_errores > 0:
+            print(f"=> Falló la validación: Datos Taxonómicos (encontrados {cant_errores} campos vacíos)")
             return False
 
     finally:
@@ -187,7 +207,6 @@ def insert_record(dataset_name, in_filepath, out_filepath):
     """
     if dataset_name not in TRADUCTOR_DATASETS:
         print(f"Dataset '{dataset_name}' no reconocido.")
-        log(dataset_name, "INSERT", 0, status="ERROR")
         return False
         
     id_col = TRADUCTOR_DATASETS[dataset_name]['id']
@@ -223,7 +242,6 @@ def insert_record(dataset_name, in_filepath, out_filepath):
         print("Validando registro")
         if not validate_record(record, dataset_name):
             print("El registro ingresado no cumple con las validaciones. Se descartará.")
-            log(dataset_name, "INSERT", 0, status="ERROR")
         else:
             # Añadir los IDs correspondientes
             record = format_record_for_insertion(record, dataset_name, base_id=current_base_id)
@@ -237,7 +255,6 @@ def insert_record(dataset_name, in_filepath, out_filepath):
 
     if not records_to_insert:
         print("No se validó ningún registro para insertar. Operación cancelada.")
-        log(dataset_name, "INSERT", 0, status="ERROR")
         return False
     
     # Lectura del original y escritura del nuevo archivo
@@ -258,9 +275,6 @@ def insert_record(dataset_name, in_filepath, out_filepath):
         writer = csv.DictWriter(fout, fieldnames=fieldnames, delimiter=delim)
         for rec in records_to_insert:
             writer.writerow(rec)
-    
-    print(f"Registrando en el log de operaciones")
-    log(dataset_name, "INSERT", len(records_to_insert))
             
     print(f"Archivo generado en: {out_filepath}")
     return True
