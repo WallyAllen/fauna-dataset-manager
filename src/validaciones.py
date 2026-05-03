@@ -253,7 +253,7 @@ def verificar_countryCode(dataset,path):
         for fila in csv_reader:
             pais = pycountry.countries.get(alpha_2=fila[colum_dataset["pais"]])
             if pais == None:
-                print(f"El codigo {fila[colum_dataset["pais"]]} no es valido")
+                print(f"El codigo {fila[colum_dataset['pais']]} no es valido")
                 exist_error = True
                 list_ids.append(fila[colum_dataset["id"]])
     result = {
@@ -451,12 +451,12 @@ if __name__ == "__main__":
     print(f"Cantidad de datos invalidos:{resultado["longitudes_invalidas"]}")
     """
     resultado_latitud = validar_latitud(dato,file_route)
-    if resultado_latitud[0]["existe_error"]:
-        print("Funco latitud")
-    if resultado_latitud[1]["existe_error"]:
-        print("Funco latitud 2")
+    if resultado_latitud['resultado_cotas']['existe_error']:
+        print("Funco latitud cotas")
+    if resultado_latitud['resultado_coordenadas']['existe_error']:
+        print("Funco latitud coordenadas")
     resultado_longitud = validar_longitud(dato,file_route)
-    if resultado_longitud[0]["existe_error"]:
-        print("Funco longitud")
-    if resultado_longitud[1]["existe_error"]:
-        print("FUnc longitud 2")
+    if resultado_longitud['resultado_cotas']['existe_error']:
+        print("Funco longitud cotas")
+    if resultado_longitud['resultado_coordenadas']['existe_error']:
+        print("Funco longitud coordenadas")
