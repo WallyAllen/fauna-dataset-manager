@@ -11,6 +11,7 @@ from src.validaciones import (
     errores_taxonomicos,
     evaluar_cotas_america
 )
+from src.log_operaciones import log
 
 def create_record_structure(filepath, id_column='id', encoding='utf-8', delimiter='\t'):
     """
@@ -186,6 +187,7 @@ def insert_record(dataset_name, in_filepath, out_filepath):
     """
     if dataset_name not in TRADUCTOR_DATASETS:
         print(f"Dataset '{dataset_name}' no reconocido.")
+        log(dataset_name, "INSERT", 0, status="ERROR")
         return False
         
     id_col = TRADUCTOR_DATASETS[dataset_name]['id']
@@ -221,6 +223,7 @@ def insert_record(dataset_name, in_filepath, out_filepath):
         print("Validando registro")
         if not validate_record(record, dataset_name):
             print("El registro ingresado no cumple con las validaciones. Se descartará.")
+            log(dataset_name, "INSERT", 0, status="ERROR")
         else:
             # Añadir los IDs correspondientes
             record = format_record_for_insertion(record, dataset_name, base_id=current_base_id)
@@ -234,6 +237,7 @@ def insert_record(dataset_name, in_filepath, out_filepath):
 
     if not records_to_insert:
         print("No se validó ningún registro para insertar. Operación cancelada.")
+        log(dataset_name, "INSERT", 0, status="ERROR")
         return False
     
     # Lectura del original y escritura del nuevo archivo
@@ -254,6 +258,9 @@ def insert_record(dataset_name, in_filepath, out_filepath):
         writer = csv.DictWriter(fout, fieldnames=fieldnames, delimiter=delim)
         for rec in records_to_insert:
             writer.writerow(rec)
+    
+    print(f"Registrando en el log de operaciones")
+    log(dataset_name, "INSERT", len(records_to_insert))
             
     print(f"Archivo generado en: {out_filepath}")
     return True
