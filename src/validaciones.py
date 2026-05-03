@@ -2,7 +2,7 @@ from pathlib import Path
 from datetime import datetime
 import csv
 import pycountry
-from ura import count_records
+from lectura import count_records
 
 TRADUCTOR_DATASETS ={
     'iadiza': {
