@@ -10,10 +10,20 @@ def _obtener_config_dataset(dataset):
         )
     return validaciones.TRADUCTOR_DATASETS[dataset]
 
-def eliminar_por_identificador(dataset, ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ','):
+def _traducir_clave(dataset, clave):
+    config = _obtener_config_dataset(dataset)
+    return config.get(clave, clave)
+
+def eliminar_por_identificador(ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ',', dataset=None):
     """
     Esta función elimina un registro del dataset a partir del identificador recibido.
     """
+    if dataset is not None:
+        config = _obtener_config_dataset(dataset)
+        if delimiter == ',':
+            delimiter = config['delimitador']
+        columnaID = _traducir_clave(dataset, columnaID)
+
     ruta_temporal = ruta_salida + '.temp'
     eliminados = 0
     try: 
@@ -30,28 +40,38 @@ def eliminar_por_identificador(dataset, ruta_entrada, ruta_salida, columnaID, id
                     escritor.writerow(fila)
         if eliminados == 0:
             print("Registro no encontrado.")
-            log(dataset, "DELETE", 0, status="ERROR")
+            if dataset is not None:
+                log(dataset, "DELETE", 0, status="ERROR")
             if os.path.exists(ruta_temporal):
                 os.remove(ruta_temporal)
         else:
             os.replace(ruta_temporal, ruta_salida)
-            log(dataset, "DELETE", eliminados)
+            if dataset is not None:
+                log(dataset, "DELETE", eliminados)
     except FileNotFoundError:
         print("FileNotFoundError")
-        log(dataset, "DELETE", 0, status="ERROR")
+        if dataset is not None:
+            log(dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
     except Exception as e: # "Exception as e" tiene como funcion notificar el tipo de error 
         print(f"Se produjo un error al procesar el archivo: {e}")
-        log(dataset, "DELETE", 0, status="ERROR")
+        if dataset is not None:
+            log(dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
         raise   
     
-def eliminar_por_lista(dataset, ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ','): # identificador en este caso es una lista
+def eliminar_por_lista(ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ',', dataset=None): # identificador en este caso es una lista
     """
     Esta funcion elimina registros del data_set a partir de la lista recibida.
     """
+    if dataset is not None:
+        config = _obtener_config_dataset(dataset)
+        if delimiter == ',':
+            delimiter = config['delimitador']
+        columnaID = _traducir_clave(dataset, columnaID)
+
     ruta_temporal= ruta_salida + '.temp'
     eliminados = 0
     try:
@@ -68,20 +88,24 @@ def eliminar_por_lista(dataset, ruta_entrada, ruta_salida, columnaID, identifica
                     escritor.writerow(fila)
         if eliminados == 0:
             print("Ninguno de los valores fue encontrado")
-            log(dataset, "DELETE", 0, status="ERROR")
+            if dataset is not None:
+                log(dataset, "DELETE", 0, status="ERROR")
             if os.path.exists(ruta_temporal):
                 os.remove(ruta_temporal)
         else:
             os.replace(ruta_temporal, ruta_salida)
-            log(dataset, "DELETE", eliminados)
+            if dataset is not None:
+                log(dataset, "DELETE", eliminados)
     except FileNotFoundError:
         print("FileNotFoundError")
-        log(dataset, "DELETE", 0, status="ERROR")
+        if dataset is not None:
+            log(dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
     except Exception as e: # "Exception as e" tiene como funcion notificar el tipo de error 
         print(f"Se produjo un error al procesar el archivo: {e}")
-        log(dataset, "DELETE", 0, status="ERROR")
+        if dataset is not None:
+            log(dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
         raise   
@@ -94,7 +118,7 @@ def cumple_condicion(valor_fila, condicion, valor_buscado):
     try:
         val_f = float(valor_fila)
         val_b = float(valor_buscado)
-    except ValueError:
+    except (ValueError, TypeError):
         # si da error los dejo como string
         val_f = str(valor_fila)
         val_b = str(valor_buscado)
@@ -108,10 +132,16 @@ def cumple_condicion(valor_fila, condicion, valor_buscado):
     elif condicion == '<=': return val_f <= val_b
     else: return False
     
-def eliminar_por_condicion(dataset, ruta_entrada, ruta_salida, columnaID, condicion, valor, delimiter=','):
+def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valor, delimiter=',', dataset=None):
     """
         Esta funcion elimina un registro si cumple la condición.
     """
+    if dataset is not None:
+        config = _obtener_config_dataset(dataset)
+        if delimiter == ',':
+            delimiter = config['delimitador']
+        columnaID = _traducir_clave(dataset, columnaID)
+
     ruta_temporal = ruta_salida + '.temp'
     eliminados = 0
     try:
@@ -128,30 +158,36 @@ def eliminar_por_condicion(dataset, ruta_entrada, ruta_salida, columnaID, condic
                         escritor.writerow(fila)
         if eliminados == 0:
             print(f"Ningun registro cumplio la condicion '{condicion} {valor}'.")
-            log(dataset, "DELETE", 0, status="ERROR")
+            if dataset is not None:
+                log(dataset, "DELETE", 0, status="ERROR")
             if os.path.exists(ruta_temporal):
                 os.remove(ruta_temporal)
         else:
             os.replace(ruta_temporal, ruta_salida)
-            log(dataset, "DELETE", eliminados)
+            if dataset is not None:
+                log(dataset, "DELETE", eliminados)
     except FileNotFoundError:
         print(f"Error: No se encontro el archivo de origen '{ruta_entrada}'")
-        log(dataset, "DELETE", 0, status="ERROR")
+        if dataset is not None:
+            log(dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)        
     except Exception as e: 
         print(f"Se produjo un error al procesar el archivo: {e}")
-        log(dataset, "DELETE", 0, status="ERROR")
+        if dataset is not None:
+            log(dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
         raise    
 
-def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t'):
+def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador=None):
     """
     Sanitiza un dataset completo evaluando cada registro con las funciones de validacion
     Los registros con errores son omitidos en el nuevo archivo limpio.
     """
     config = _obtener_config_dataset(nombre_dataset)
+    if delimitador is None:
+        delimitador = config['delimitador']
     
     # inicializo contadores
     registros_leidos = 0
@@ -185,7 +221,9 @@ def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t
             escritor.writeheader()
             for fila in lector:
                 registros_leidos += 1
-                rid = fila.get(col_id)
+                # Usamos .get() y si no existe el ID del config, probamos con 'id' genérico por si es un archivo de prueba
+                rid = fila.get(col_id) or fila.get('id')
+                
                 # aplico validaciones y agrego and para reducir procesamiento
                 if rid in ids_a_eliminar:
                     # si contiene errores lo omito y aumento registros_eliminados
