@@ -7,17 +7,17 @@ def eliminar_por_identificador(ruta_entrada, ruta_salida, columnaID, identificad
     Esta funcion elimina un registro del dataset a partir del identificador recibido.
     """
     ruta_temporal = ruta_salida + '.temp'
-    encontre= False
+    encontre = False
     try: 
         with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open(ruta_temporal, mode = 'w', encoding='utf-8') as archivo_escritura:
-            lector=csv.DictReader(archivo_lectura, delimiter=delimiter)
-            nombres_columnas= lector.fieldnames
-            escritor=csv.DictWriter(archivo_escritura, nombres_columnas, delimiter=delimiter)
+            lector =csv.DictReader(archivo_lectura, delimiter=delimiter)
+            nombres_columnas = lector.fieldnames
+            escritor =csv.DictWriter(archivo_escritura, nombres_columnas, delimiter=delimiter)
             escritor.writeheader()
             for fila in lector:
                 if fila.get(columnaID) == str(identificador):
                     print("Registro encontrado correctamente.")
-                    encontre= True
+                    encontre = True
                 else:
                     escritor.writerow(fila)
         if not encontre:
@@ -32,21 +32,21 @@ def eliminar_por_identificador(ruta_entrada, ruta_salida, columnaID, identificad
             os.remove(ruta_temporal)
         raise   
     
-def eliminar_por_lista(ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ','): #identificador en este caso es una lista
+def eliminar_por_lista(ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ','): # identificador en este caso es una lista
     """
     Esta funcion elimina registros del data_set a partir de la lista recibida.
     """
     ruta_temporal= ruta_salida + '.temp'
-    encontre= False
+    encontre = False
     try:
         with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open (ruta_temporal, mode= 'w', encoding= 'utf-8') as archivo_escritura:
             lector= csv.DictReader(archivo_lectura, delimiter = delimiter)
-            nombres_columnas= lector.fieldnames
-            escritor= csv.DictWriter(archivo_escritura, nombres_columnas, delimiter = delimiter)
+            nombres_columnas = lector.fieldnames
+            escritor = csv.DictWriter(archivo_escritura, nombres_columnas, delimiter = delimiter)
             for fila in lector:
                 if fila.get(columnaID) in identificador:
                     print("Valor encontrado dentro del registro")
-                    encontre= True
+                    encontre = True
                 else:
                     escritor.writerow(fila)
         if not encontre:
@@ -65,16 +65,16 @@ def cumple_condicion(valor_fila, condicion, valor_buscado):
     """
     Evalua la condicion matematica entre el valor de la fila y el buscado
     """
-    #intento convertir ambos a numeros para compararlos matematicamente
+    # intento convertir ambos a numeros para compararlos matematicamente
     try:
         val_f = float(valor_fila)
         val_b = float(valor_buscado)
     except ValueError:
-        #si da error los dejo como string
+        # si da error los dejo como string
         val_f = str(valor_fila)
         val_b = str(valor_buscado)
         
-    #evaluo que simbolo pasaron y retorno yrue o false
+    # evaluo que simbolo pasaron y retorno yrue o false
     if condicion == '==': return val_f == val_b
     elif condicion == '!=': return val_f != val_b
     elif condicion == '>': return val_f > val_b
@@ -85,7 +85,7 @@ def cumple_condicion(valor_fila, condicion, valor_buscado):
     
 def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valor, delimiter=','):
     """
-        esta funcion elimina un registro si cumple la condicion
+        Esta funcion elimina un registro si cumple la condición.
     """
     ruta_temporal= ruta_salida + '.temp'
     encontre= False
@@ -116,7 +116,7 @@ def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valo
 
 def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t'):
     """
-    sanitiza un dataset completo evaluando cada registro con las funciones de validacion
+    Sanitiza un dataset completo evaluando cada registro con las funciones de validacion
     los registros con errores son omitidos en el nuevo archivo limpio.
     """
     ruta_temporal = ruta_salida + '.temp'
@@ -124,7 +124,7 @@ def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t
     # inicializo contadores
     registros_leidos = 0
     registros_eliminados = 0
-    #diccionario para agrupar motivos 
+    # diccionario para agrupar motivos 
     motivos_eliminacion = {}
     try:
         # Abrimos origen y destino temporal

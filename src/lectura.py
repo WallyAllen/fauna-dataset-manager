@@ -1,7 +1,6 @@
 import csv
 from pathlib import Path
 
-
 def print_first_rows(filepath, n=10, encoding='utf-8', delimiter='\t'):
     """
     Ejercicio 2.A
