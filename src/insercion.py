@@ -139,7 +139,7 @@ def get_next_base_id(dataset_name, filepath):
         
     return max_id + 1
 
-def format_record_for_insertion(record, dataset_name, filepath):
+def format_record_for_insertion(record, dataset_name, filepath=None, base_id=None):
     """
     Recibe un registro validado y le añade los IDs (autoincremental) según el dataset correspondiente.
     Retorna el diccionario listo para ser añadido al CSV.
@@ -147,8 +147,11 @@ def format_record_for_insertion(record, dataset_name, filepath):
     if dataset_name not in TRADUCTOR_DATASETS:
         return record
         
-    # Obtenemos el ID siguiente de forma autoincremental leyendo el archivo
-    base_id = get_next_base_id(dataset_name, filepath)
+    # Obtenemos el ID siguiente de forma autoincremental leyendo el archivo si no se provee
+    if base_id is None:
+        if filepath is None:
+            raise ValueError("Se debe proveer filepath o base_id")
+        base_id = get_next_base_id(dataset_name, filepath)
     
     if dataset_name == 'inaturalist':
         record['id'] = str(base_id)
@@ -177,9 +180,9 @@ def format_record_for_insertion(record, dataset_name, filepath):
 def insert_record(dataset_name, in_filepath, out_filepath):
     """
     Lee el dataset original para obtener su estructura.
-    Agrega un nuevo registro solicitando por teclado los datos esenciales.
-    Valida y formatea el registro.
-    Escribe un nuevo archivo conservando la estructura e incluyendo el nuevo registro.
+    Permite agregar múltiples registros solicitando por teclado los datos esenciales.
+    Valida y formatea cada registro.
+    Escribe un nuevo archivo conservando la estructura e incluyendo los nuevos registros.
     """
     if dataset_name not in TRADUCTOR_DATASETS:
         print(f"Dataset '{dataset_name}' no reconocido.")
@@ -188,14 +191,14 @@ def insert_record(dataset_name, in_filepath, out_filepath):
     id_col = TRADUCTOR_DATASETS[dataset_name]['id']
     delim = TRADUCTOR_DATASETS[dataset_name]['delimitador']
     
-    # 1. Crear estructura vacía basada en el dataset original
-    record = create_record_structure(in_filepath, id_column=id_col, delimiter=delim)
+    # Pre-calculamos el ID base inicial
+    current_base_id = get_next_base_id(dataset_name, in_filepath)
     
-    # 2. Pedir datos por teclado
-    print("--- Ingrese los datos del nuevo registro ---")
+    records_to_insert = []
+    
+    # Identificar columnas esenciales
     traductor = TRADUCTOR_DATASETS[dataset_name]
     columnas_esenciales = []
-    
     for key, value in traductor.items():
         if key in ['delimitador', 'id']:
             continue
@@ -204,18 +207,34 @@ def insert_record(dataset_name, in_filepath, out_filepath):
         elif value != '':
             columnas_esenciales.append(value)
             
-    for col in columnas_esenciales:
-        if col in record:
-            record[col] = input(f"Ingrese valor para {col}: ")
-            
-    # Validar el registro ingresado
-    print("Validando registro")
-    if not validate_record(record, dataset_name):
-        print("El registro ingresado no cumple con las validaciones.")
-        return False
+    while True:
+        # 1. Crear estructura vacía
+        record = create_record_structure(in_filepath, id_column=id_col, delimiter=delim)
         
-    # Añadir los IDs correspondientes
-    record = format_record_for_insertion(record, dataset_name, in_filepath)
+        # 2. Pedir datos por teclado
+        print("\n--- Ingrese los datos del nuevo registro ---")
+        for col in columnas_esenciales:
+            if col in record:
+                record[col] = input(f"Ingrese valor para {col}: ")
+                
+        # Validar el registro ingresado
+        print("Validando registro")
+        if not validate_record(record, dataset_name):
+            print("El registro ingresado no cumple con las validaciones. Se descartará.")
+        else:
+            # Añadir los IDs correspondientes
+            record = format_record_for_insertion(record, dataset_name, base_id=current_base_id)
+            records_to_insert.append(record)
+            current_base_id += 1
+            print("Registro validado exitosamente.")
+            
+        resp = input("\n¿Desea ingresar otro registro? (s/n): ").strip().lower()
+        if resp != 's':
+            break
+
+    if not records_to_insert:
+        print("No se validó ningún registro para insertar. Operación cancelada.")
+        return False
     
     # Lectura del original y escritura del nuevo archivo
     os.makedirs(os.path.dirname(out_filepath), exist_ok=True)
@@ -225,15 +244,16 @@ def insert_record(dataset_name, in_filepath, out_filepath):
         reader = csv.DictReader(fin, delimiter=delim)
         fieldnames = reader.fieldnames
         
-    print("Creando nuevo archivo")
+    print("Creando nuevo archivo y copiando datos originales")
     with open(in_filepath, 'r', encoding='utf-8') as fin, open(out_filepath, 'w', encoding='utf-8') as fout:
         for line in fin:
             fout.write(line)
             
-    print("Anexando el nuevo registro al final")
+    print(f"Anexando {len(records_to_insert)} nuevos registros al final")
     with open(out_filepath, 'a', encoding='utf-8', newline='') as fout:
         writer = csv.DictWriter(fout, fieldnames=fieldnames, delimiter=delim)
-        writer.writerow(record)
-        
+        for rec in records_to_insert:
+            writer.writerow(rec)
+            
     print(f"Archivo generado en: {out_filepath}")
     return True
