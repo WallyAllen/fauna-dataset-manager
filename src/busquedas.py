@@ -34,16 +34,16 @@ def actualizar_registros(dataset, ruta_archivo, ruta_salida, identificador, colu
 
     no_valido = False
     if "decimalLatitude" in valores_nuevos or "decimalLongitude" in valores_nuevos:
-        if not validaciones.validar_coordenadas(dataset, ruta_salida, delimitador):
+        if not validaciones.validar_coordenadas(dataset, ruta_salida):
             no_valido= True
     if "eventDate" in valores_nuevos:
-        if not validaciones.validar_fechas(dataset, ruta_salida, delimitador):
+        if not validaciones.validar_fechas(dataset, ruta_salida):
             no_valido= True
     if "countryCode" in valores_nuevos:
-        if not validaciones.verificar_countryCode(dataset, ruta_salida, delimitador):
+        if not validaciones.verificar_countryCode(dataset, ruta_salida):
             no_valido= True
     if "coordinateUncertaintyInMeters" in valores_nuevos:
-        if not validaciones.verificar_incertidumbre(dataset, ruta_salida, delimitador):
+        if not validaciones.verificar_incertidumbre(dataset, ruta_salida):
             no_valido= True
           
     ruta_temporal = ruta_salida + ".temp" #creo una ruta temporal para poder operar       
