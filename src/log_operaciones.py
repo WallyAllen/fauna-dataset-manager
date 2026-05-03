@@ -25,10 +25,10 @@ def log(dataset, op_type, affected, status=None):
 
     Args:
         dataset (str): Nombre del dataset sobre el que se ejecutó la operación.
-        op_type (str): Tipo de operación registrada. (ej: "insert", "delete", "update").
+        op_type (str): Tipo de operación registrada. (ej: "INSERT", "DELETE", "UPDATE").
         affected (int): Cantidad de registros afectados por la operación.
         status (opcional): Indicador de estado. Si no es `None`, se agrega la etiqueta
-            " | ERROR" al final del registro. Por default, es None.
+            "ERROR" al final del registro. Por default, es None.
     
     Raises:
         No propaga excepciones, captura `FileNotFoundError`, `PermissionError`
