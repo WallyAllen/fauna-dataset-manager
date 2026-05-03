@@ -1,62 +1,80 @@
 import csv
 import os
 import validaciones
+from src.log_operaciones import log
 
-def eliminar_por_identificador(ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ','):
+def eliminar_por_identificador(dataset, ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ','):
     """
-    Esta funcion elimina un registro del dataset a partir del identificador recibido.
+    Esta función elimina un registro del dataset a partir del identificador recibido.
     """
     ruta_temporal = ruta_salida + '.temp'
-    encontre = False
+    eliminados = 0
     try: 
         with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open(ruta_temporal, mode = 'w', encoding='utf-8') as archivo_escritura:
-            lector =csv.DictReader(archivo_lectura, delimiter=delimiter)
+            lector = csv.DictReader(archivo_lectura, delimiter=delimiter)
             nombres_columnas = lector.fieldnames
-            escritor =csv.DictWriter(archivo_escritura, nombres_columnas, delimiter=delimiter)
+            escritor = csv.DictWriter(archivo_escritura, nombres_columnas, delimiter=delimiter)
             escritor.writeheader()
             for fila in lector:
                 if fila.get(columnaID) == str(identificador):
                     print("Registro encontrado correctamente.")
-                    encontre = True
+                    eliminados += 1
                 else:
                     escritor.writerow(fila)
-        if not encontre:
+        if eliminados == 0:
             print("Registro no encontrado.")
-        os.replace(ruta_temporal, ruta_salida)
+            log(dataset, "DELETE", 0, status="ERROR")
+            if os.path.exists(ruta_temporal):
+                os.remove(ruta_temporal)
+        else:
+            os.replace(ruta_temporal, ruta_salida)
+            log(dataset, "DELETE", eliminados)
     except FileNotFoundError:
         print("FileNotFoundError")
-        os.remove(ruta_temporal)
+        log(dataset, "DELETE", 0, status="ERROR")
+        if os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)
     except Exception as e: # "Exception as e" tiene como funcion notificar el tipo de error 
         print(f"Se produjo un error al procesar el archivo: {e}")
+        log(dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
         raise   
     
-def eliminar_por_lista(ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ','): # identificador en este caso es una lista
+def eliminar_por_lista(dataset, ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ','): # identificador en este caso es una lista
     """
     Esta funcion elimina registros del data_set a partir de la lista recibida.
     """
     ruta_temporal= ruta_salida + '.temp'
-    encontre = False
+    eliminados = 0
     try:
         with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open (ruta_temporal, mode= 'w', encoding= 'utf-8') as archivo_escritura:
-            lector= csv.DictReader(archivo_lectura, delimiter = delimiter)
+            lector = csv.DictReader(archivo_lectura, delimiter = delimiter)
             nombres_columnas = lector.fieldnames
             escritor = csv.DictWriter(archivo_escritura, nombres_columnas, delimiter = delimiter)
+            escritor.writeheader()
             for fila in lector:
                 if fila.get(columnaID) in identificador:
                     print("Valor encontrado dentro del registro")
-                    encontre = True
+                    eliminados += 1
                 else:
                     escritor.writerow(fila)
-        if not encontre:
+        if eliminados == 0:
             print("Ninguno de los valores fue encontrado")
-        os.replace(ruta_temporal, ruta_salida)
+            log(dataset, "DELETE", 0, status="ERROR")
+            if os.path.exists(ruta_temporal):
+                os.remove(ruta_temporal)
+        else:
+            os.replace(ruta_temporal, ruta_salida)
+            log(dataset, "DELETE", eliminados)
     except FileNotFoundError:
         print("FileNotFoundError")
-        os.remove(ruta_temporal)
+        log(dataset, "DELETE", 0, status="ERROR")
+        if os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)
     except Exception as e: # "Exception as e" tiene como funcion notificar el tipo de error 
         print(f"Se produjo un error al procesar el archivo: {e}")
+        log(dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
         raise   
@@ -74,7 +92,7 @@ def cumple_condicion(valor_fila, condicion, valor_buscado):
         val_f = str(valor_fila)
         val_b = str(valor_buscado)
         
-    # evaluo que simbolo pasaron y retorno yrue o false
+    # evaluo que simbolo pasaron y retorno true o false
     if condicion == '==': return val_f == val_b
     elif condicion == '!=': return val_f != val_b
     elif condicion == '>': return val_f > val_b
@@ -83,33 +101,40 @@ def cumple_condicion(valor_fila, condicion, valor_buscado):
     elif condicion == '<=': return val_f <= val_b
     else: return False
     
-def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valor, delimiter=','):
+def eliminar_por_condicion(dataset, ruta_entrada, ruta_salida, columnaID, condicion, valor, delimiter=','):
     """
         Esta funcion elimina un registro si cumple la condición.
     """
-    ruta_temporal= ruta_salida + '.temp'
-    encontre= False
+    ruta_temporal = ruta_salida + '.temp'
+    eliminados = 0
     try:
         with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open (ruta_temporal, mode= 'w', encoding= 'utf-8') as archivo_escritura:
                 lector= csv.DictReader(archivo_lectura, delimiter = delimiter)
                 escritor= csv.DictWriter(archivo_escritura, nombres_columnas= lector.fieldnames , delimiter = delimiter)
                 escritor.writeheader()
-        for fila in lector:
+                for fila in lector:
                     # llamo a la funcion anterior
                     if cumple_condicion(fila.get(columnaID), condicion, valor):
                         print(f"Registro eliminado por cumplir: {columnaID} {condicion} {valor}")
-                        encontre = True
+                        eliminados += 1
                     else:
                         escritor.writerow(fila)
-        if not encontre:
-                print(f"Ningun registro cumplio la condicion '{condicion} {valor}'.")
-        os.replace(ruta_temporal, ruta_salida)
+        if eliminados == 0:
+            print(f"Ningun registro cumplio la condicion '{condicion} {valor}'.")
+            log(dataset, "DELETE", 0, status="ERROR")
+            if os.path.exists(ruta_temporal):
+                os.remove(ruta_temporal)
+        else:
+            os.replace(ruta_temporal, ruta_salida)
+            log(dataset, "DELETE", eliminados)
     except FileNotFoundError:
         print(f"Error: No se encontro el archivo de origen '{ruta_entrada}'")
+        log(dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)        
     except Exception as e: 
         print(f"Se produjo un error al procesar el archivo: {e}")
+        log(dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
         raise    
@@ -117,7 +142,7 @@ def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valo
 def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t'):
     """
     Sanitiza un dataset completo evaluando cada registro con las funciones de validacion
-    los registros con errores son omitidos en el nuevo archivo limpio.
+    Los registros con errores son omitidos en el nuevo archivo limpio.
     """
     ruta_temporal = ruta_salida + '.temp'
     
@@ -177,6 +202,7 @@ def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t
         print(f"Registros limpios guardados: {registros_leidos - registros_eliminados}")
         print(f"Registros eliminados: {registros_eliminados} ({porcentaje:.2f}% del total)")
         if registros_eliminados > 0:
+            log(nombre_dataset, "DELETE", registros_eliminados)
             print("\nMotivos de eliminación detallados:")
             for motivo, cantidad in motivos_eliminacion.items():
                 porcentaje_motivo = (cantidad / registros_eliminados) * 100
@@ -184,11 +210,13 @@ def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t
         print("====================================================")
     except FileNotFoundError:
         print(f"Error: No se encontro el dataset original en '{ruta_entrada}'")
+        log(nombre_dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
             
     except Exception as e: 
         print(f"Se produjo un error al sanitizar: {e}")
+        log(nombre_dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
         raise          
