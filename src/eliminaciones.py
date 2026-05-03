@@ -3,6 +3,13 @@ import os
 import validaciones
 from src.log_operaciones import log
 
+def _obtener_config_dataset(dataset):
+    if dataset not in validaciones.TRADUCTOR_DATASETS:
+        raise ValueError(
+            f"Dataset '{dataset}' no reconocido. Opciones válidas: {list(validaciones.TRADUCTOR_DATASETS.keys())}"
+        )
+    return validaciones.TRADUCTOR_DATASETS[dataset]
+
 def eliminar_por_identificador(dataset, ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ','):
     """
     Esta función elimina un registro del dataset a partir del identificador recibido.
@@ -10,10 +17,10 @@ def eliminar_por_identificador(dataset, ruta_entrada, ruta_salida, columnaID, id
     ruta_temporal = ruta_salida + '.temp'
     eliminados = 0
     try: 
-        with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open(ruta_temporal, mode = 'w', encoding='utf-8') as archivo_escritura:
+        with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open(ruta_temporal, mode = 'w', newline='', encoding='utf-8') as archivo_escritura:
             lector = csv.DictReader(archivo_lectura, delimiter=delimiter)
             nombres_columnas = lector.fieldnames
-            escritor = csv.DictWriter(archivo_escritura, nombres_columnas, delimiter=delimiter)
+            escritor = csv.DictWriter(archivo_escritura, fieldnames=nombres_columnas, delimiter=delimiter)
             escritor.writeheader()
             for fila in lector:
                 if fila.get(columnaID) == str(identificador):
@@ -48,10 +55,10 @@ def eliminar_por_lista(dataset, ruta_entrada, ruta_salida, columnaID, identifica
     ruta_temporal= ruta_salida + '.temp'
     eliminados = 0
     try:
-        with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open (ruta_temporal, mode= 'w', encoding= 'utf-8') as archivo_escritura:
+        with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open (ruta_temporal, mode= 'w', newline='', encoding= 'utf-8') as archivo_escritura:
             lector = csv.DictReader(archivo_lectura, delimiter = delimiter)
             nombres_columnas = lector.fieldnames
-            escritor = csv.DictWriter(archivo_escritura, nombres_columnas, delimiter = delimiter)
+            escritor = csv.DictWriter(archivo_escritura, fieldnames=nombres_columnas, delimiter = delimiter)
             escritor.writeheader()
             for fila in lector:
                 if fila.get(columnaID) in identificador:
@@ -108,9 +115,9 @@ def eliminar_por_condicion(dataset, ruta_entrada, ruta_salida, columnaID, condic
     ruta_temporal = ruta_salida + '.temp'
     eliminados = 0
     try:
-        with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open (ruta_temporal, mode= 'w', encoding= 'utf-8') as archivo_escritura:
+        with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open (ruta_temporal, mode= 'w', newline='', encoding= 'utf-8') as archivo_escritura:
                 lector= csv.DictReader(archivo_lectura, delimiter = delimiter)
-                escritor= csv.DictWriter(archivo_escritura, nombres_columnas= lector.fieldnames , delimiter = delimiter)
+                escritor= csv.DictWriter(archivo_escritura, fieldnames= lector.fieldnames , delimiter = delimiter)
                 escritor.writeheader()
                 for fila in lector:
                     # llamo a la funcion anterior
@@ -144,51 +151,55 @@ def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t
     Sanitiza un dataset completo evaluando cada registro con las funciones de validacion
     Los registros con errores son omitidos en el nuevo archivo limpio.
     """
-    ruta_temporal = ruta_salida + '.temp'
+    config = _obtener_config_dataset(nombre_dataset)
     
     # inicializo contadores
     registros_leidos = 0
     registros_eliminados = 0
     # diccionario para agrupar motivos 
     motivos_eliminacion = {}
+
+    ids_a_eliminar = {} # {id: motivo}
+    
+    def registrar_errores(resultado, motivo):
+        if resultado and resultado.get('existe_error'):
+            lista_ids = resultado.get('lista_invalidos') or resultado.get('lista_ids') or resultado.get('id_duplicados') or []
+            for rid in lista_ids:
+                if rid not in ids_a_eliminar:
+                    ids_a_eliminar[rid] = motivo
+
+    registrar_errores(validaciones.validar_coordenadas(nombre_dataset, ruta_entrada), "Error en Coordenadas")
+    registrar_errores(validaciones.validar_fechas(nombre_dataset, ruta_entrada), "Error en Fechas")
+    registrar_errores(validaciones.verificar_countryCode(nombre_dataset, ruta_entrada), "Error en Código de País")
+    registrar_errores(validaciones.verificar_incertidumbre(nombre_dataset, ruta_entrada), "Error en Incertidumbre")
+
+    ruta_temporal = ruta_salida + '.temp'
+    col_id = config['id']
+
     try:
         # Abrimos origen y destino temporal
-        with open(ruta_entrada, mode='r', encoding='utf-8') as archivo_lectura, open(ruta_temporal, mode='w', encoding='utf-8') as archivo_escritura:
+        with open(ruta_entrada, mode='r', encoding='utf-8') as archivo_lectura, open(ruta_temporal, mode='w', newline='', encoding='utf-8') as archivo_escritura:
             lector = csv.DictReader(archivo_lectura, delimiter=delimitador)
             nombres_columnas = lector.fieldnames        
             escritor = csv.DictWriter(archivo_escritura, fieldnames=nombres_columnas, delimiter=delimitador)
             escritor.writeheader()
             for fila in lector:
                 registros_leidos += 1
-                es_valido = True 
+                rid = fila.get(col_id)
                 # aplico validaciones y agrego and para reducir procesamiento
-                if ("decimalLatitude" in fila or "decimalLongitude" in fila) and es_valido:
-                    if not validaciones.validar_coordenadas(nombre_dataset, ruta_entrada, delimitador):
-                        es_valido = False
-                        motivo_falla = "Error en Coordenadas"
-                if "eventDate" in fila and es_valido:
-                    if not validaciones.validar_fechas(nombre_dataset, ruta_entrada, delimitador):
-                        es_valido = False
-                        motivo_falla = "Error en Fechas"
-                if "countryCode" in fila and es_valido:
-                    if not validaciones.verificar_countryCode(nombre_dataset, ruta_entrada, delimitador):
-                        es_valido = False
-                        motivo_falla = "Error en Código de País"
-                if "coordinateUncertaintyInMeters" in fila and es_valido:
-                    if not validaciones.verificar_incertidumbre(nombre_dataset, ruta_entrada, delimitador):
-                        es_valido = False
-                        motivo_falla = "Error en Incertidumbre" 
-                if es_valido:
-                    # si el registro esta ok, lo escribo en el .temp
-                    escritor.writerow(fila)
-                else:
+                if rid in ids_a_eliminar:
                     # si contiene errores lo omito y aumento registros_eliminados
                     registros_eliminados += 1
+                    motivo_falla = ids_a_eliminar[rid]
                     if motivo_falla in motivos_eliminacion:
                         motivos_eliminacion[motivo_falla] += 1
                     else:
                         motivos_eliminacion[motivo_falla] = 1
-                    #post sanitizar, reemplazo la ruta de salida por el .temp
+                else:
+                    # si el registro esta ok, lo escribo en el .temp
+                    escritor.writerow(fila)
+                    
+        #post sanitizar, reemplazo la ruta de salida por el .temp
         os.replace(ruta_temporal, ruta_salida)
         if registros_leidos > 0:
             porcentaje = (registros_eliminados / registros_leidos) * 100
@@ -219,5 +230,4 @@ def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t
         log(nombre_dataset, "DELETE", 0, status="ERROR")
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
-        raise          
-
+        raise
