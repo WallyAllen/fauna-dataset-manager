@@ -99,4 +99,31 @@ def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valo
                         print(f"Registro eliminado por cumplir: {columnaID} {condicion} {valor}")
                         encontre = True
                     else:
-                        escritor.writerow(fila) 
+                        escritor.writerow(fila)
+        if not encontre:
+                print(f"Ningun registro cumplio la condicion '{condicion} {valor}'.")
+        os.replace(ruta_temporal, ruta_salida)
+    except FileNotFoundError:
+        print(f"Error: No se encontro el archivo de origen '{ruta_entrada}'")
+        if os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)        
+    except Exception as e: 
+        print(f"Se produjo un error al procesar el archivo: {e}")
+        if os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)
+        raise    
+
+import csv
+import os
+import validaciones # Asumiendo que así se llama el archivo de tu compañero B
+
+def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t'):
+    """
+    Sanitiza un dataset completo evaluando cada registro con las reglas de validación.
+    Los registros con errores son omitidos (eliminados) en el nuevo archivo limpio.
+    """
+    ruta_temporal = ruta_salida + '.temp'
+    
+    # Contadores para saber qué pasó (ideal para el ejercicio 6.F)
+    registros_leidos = 0
+    registros_eliminados = 0
