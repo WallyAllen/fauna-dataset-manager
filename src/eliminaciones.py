@@ -60,9 +60,9 @@ def eliminar_por_lista(ruta_entrada, ruta_salida, columnaID, identificador, deli
             os.remove(ruta_temporal)
         raise   
     
-def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valor, delimiter=','):
+def cumple_condicion(valor_fila, condicion, valor_buscado):
     """
-    Evalúa la condición matemática entre el valor de la fila y el buscado.
+    Evalua la condicion matematica entre el valor de la fila y el buscado
     """
     #intento convertir ambos a numeros para compararlos matematicamente
     try:
@@ -81,3 +81,20 @@ def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valo
     elif condicion == '>=': return val_f >= val_b
     elif condicion == '<=': return val_f <= val_b
     else: return False
+    
+def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valor, delimiter=','):
+    """
+        esta funcion elimina un registro si cumple la condicion
+    """
+    ruta_temporal= ruta_salida + '.temp'
+    encontre= False
+    with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open (ruta_temporal, mode= 'w', encoding= 'utf-8') as archivo_escritura:
+            lector= csv.DictReader(archivo_lectura, delimiter = delimiter)
+            escritor= csv.DictWriter(archivo_escritura, nombres_columnas= lector.fieldnames , delimiter = delimiter)
+    for fila in lector:
+                # Llamamos a nuestro "ayudante" para que haga la matemática
+                if cumple_condicion(fila.get(columnaID), condicion, valor):
+                    print(f"Registro eliminado por cumplir: {columnaID} {condicion} {valor}")
+                    encontre = True
+                else:
+                    escritor.writerow(fila)
