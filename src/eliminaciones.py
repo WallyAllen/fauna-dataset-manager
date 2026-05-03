@@ -88,13 +88,15 @@ def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valo
     """
     ruta_temporal= ruta_salida + '.temp'
     encontre= False
-    with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open (ruta_temporal, mode= 'w', encoding= 'utf-8') as archivo_escritura:
-            lector= csv.DictReader(archivo_lectura, delimiter = delimiter)
-            escritor= csv.DictWriter(archivo_escritura, nombres_columnas= lector.fieldnames , delimiter = delimiter)
-    for fila in lector:
-                # Llamamos a nuestro "ayudante" para que haga la matemática
-                if cumple_condicion(fila.get(columnaID), condicion, valor):
-                    print(f"Registro eliminado por cumplir: {columnaID} {condicion} {valor}")
-                    encontre = True
-                else:
-                    escritor.writerow(fila)
+    try:
+        with open(ruta_entrada, mode= 'r', encoding= 'utf-8') as archivo_lectura, open (ruta_temporal, mode= 'w', encoding= 'utf-8') as archivo_escritura:
+                lector= csv.DictReader(archivo_lectura, delimiter = delimiter)
+                escritor= csv.DictWriter(archivo_escritura, nombres_columnas= lector.fieldnames , delimiter = delimiter)
+                escritor.writeheader()
+        for fila in lector:
+                    # llamo a la funcion anterior
+                    if cumple_condicion(fila.get(columnaID), condicion, valor):
+                        print(f"Registro eliminado por cumplir: {columnaID} {condicion} {valor}")
+                        encontre = True
+                    else:
+                        escritor.writerow(fila) 
