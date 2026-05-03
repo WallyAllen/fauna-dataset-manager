@@ -59,3 +59,25 @@ def eliminar_por_lista(ruta_entrada, ruta_salida, columnaID, identificador, deli
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
         raise   
+    
+def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valor, delimiter=','):
+    """
+    Evalúa la condición matemática entre el valor de la fila y el buscado.
+    """
+    #intento convertir ambos a numeros para compararlos matematicamente
+    try:
+        val_f = float(valor_fila)
+        val_b = float(valor_buscado)
+    except ValueError:
+        #si da error los dejo como string
+        val_f = str(valor_fila)
+        val_b = str(valor_buscado)
+        
+    #evaluo que simbolo pasaron y retorno yrue o false
+    if condicion == '==': return val_f == val_b
+    elif condicion == '!=': return val_f != val_b
+    elif condicion == '>': return val_f > val_b
+    elif condicion == '<': return val_f < val_b
+    elif condicion == '>=': return val_f >= val_b
+    elif condicion == '<=': return val_f <= val_b
+    else: return False
