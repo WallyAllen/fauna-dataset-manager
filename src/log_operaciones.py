@@ -38,6 +38,7 @@ def log(dataset, op_type, affected, status=None):
     LOG_FILE = BASE_DIR / "logs" / "operations.log"
     error_tag = " | ERROR" if status is not None else ""
     try:
+        LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(LOG_FILE, "a") as file:
             file.write(f"{current_date()} | {dataset} | {op_type} | {affected} registros{error_tag}\n")
     except FileNotFoundError:
