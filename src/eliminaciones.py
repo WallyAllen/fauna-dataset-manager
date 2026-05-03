@@ -118,7 +118,7 @@ def cumple_condicion(valor_fila, condicion, valor_buscado):
     try:
         val_f = float(valor_fila)
         val_b = float(valor_buscado)
-    except ValueError:
+    except (ValueError, TypeError):
         # si da error los dejo como string
         val_f = str(valor_fila)
         val_b = str(valor_buscado)
@@ -180,12 +180,14 @@ def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valo
             os.remove(ruta_temporal)
         raise    
 
-def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t'):
+def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador=None):
     """
     Sanitiza un dataset completo evaluando cada registro con las funciones de validacion
     Los registros con errores son omitidos en el nuevo archivo limpio.
     """
     config = _obtener_config_dataset(nombre_dataset)
+    if delimitador is None:
+        delimitador = config['delimitador']
     
     # inicializo contadores
     registros_leidos = 0
@@ -219,7 +221,9 @@ def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t
             escritor.writeheader()
             for fila in lector:
                 registros_leidos += 1
-                rid = fila.get(col_id)
+                # Usamos .get() y si no existe el ID del config, probamos con 'id' genérico por si es un archivo de prueba
+                rid = fila.get(col_id) or fila.get('id')
+                
                 # aplico validaciones y agrego and para reducir procesamiento
                 if rid in ids_a_eliminar:
                     # si contiene errores lo omito y aumento registros_eliminados
