@@ -2,7 +2,7 @@ from pathlib import Path
 from datetime import datetime
 import csv
 import pycountry
-from lectura import count_records
+from src.lectura import count_records
 
 TRADUCTOR_DATASETS ={
     'iadiza': {
@@ -412,7 +412,7 @@ if __name__ == "__main__":
     #Creo una variable con la ruta de archivo dinamica
     DIC_BASE = Path(__file__).resolve().parent.parent
 
-    file_route = DIC_BASE / 'raw_datasets' / 'inaturalist-filtered' / 'observations.csv'
+    file_route = DIC_BASE / 'raw_datasets' / 'inaturalist' / 'observations.csv'
     dato = datos(dato)
     """
     resultado = validar_coordenadas(dato,file_route)
