@@ -135,17 +135,17 @@ def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t
                 registros_leidos += 1
                 es_valido = True 
                 # aplico validaciones
-                if "decimalLatitude" in fila and "decimalLongitude" in fila:
-                    if not validaciones.validar_coordenadas(nombre_dataset, fila):
+                if "decimalLatitude" in fila or "decimalLongitude" in fila:
+                    if not validaciones.validar_coordenadas(nombre_dataset, ruta_entrada, delimitador):
                         es_valido = False
                 if "eventDate" in fila:
-                    if not validaciones.validar_fechas(nombre_dataset, fila["eventDate"]):
+                    if not validaciones.validar_fechas(nombre_dataset, ruta_entrada, delimitador):
                         es_valido = False
                 if "countryCode" in fila:
-                    if not validaciones.verificar_countryCode(nombre_dataset, fila["countryCode"]):
-                        es_valido = False   
+                    if not validaciones.verificar_countryCode(nombre_dataset, ruta_entrada, delimitador):
+                        es_valido = False
                 if "coordinateUncertaintyInMeters" in fila:
-                    if not validaciones.verificar_incertidumbre(nombre_dataset, fila["coordinateUncertaintyInMeters"]):
+                    if not validaciones.verificar_incertidumbre(nombre_dataset, ruta_entrada, delimitador):
                         es_valido = False
                 if es_valido:
                     # si el registro esta ok, lo escribo en el .temp
