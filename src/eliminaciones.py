@@ -1,5 +1,6 @@
 import csv
 import os
+import validaciones
 
 def eliminar_por_identificador(ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ','):
     """
@@ -113,17 +114,62 @@ def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valo
             os.remove(ruta_temporal)
         raise    
 
-import csv
-import os
-import validaciones # Asumiendo que así se llama el archivo de tu compañero B
-
 def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador='\t'):
     """
-    Sanitiza un dataset completo evaluando cada registro con las reglas de validación.
-    Los registros con errores son omitidos (eliminados) en el nuevo archivo limpio.
+    sanitiza un dataset completo evaluando cada registro con las funciones de validacion
+    los registros con errores son omitidos en el nuevo archivo limpio.
     """
     ruta_temporal = ruta_salida + '.temp'
     
-    # Contadores para saber qué pasó (ideal para el ejercicio 6.F)
+    # inicializo contadores
     registros_leidos = 0
     registros_eliminados = 0
+    try:
+        # Abrimos origen y destino temporal
+        with open(ruta_entrada, mode='r', encoding='utf-8') as archivo_lectura, open(ruta_temporal, mode='w', encoding='utf-8') as archivo_escritura:
+            lector = csv.DictReader(archivo_lectura, delimiter=delimitador)
+            nombres_columnas = lector.fieldnames        
+            escritor = csv.DictWriter(archivo_escritura, fieldnames=nombres_columnas, delimiter=delimitador)
+            escritor.writeheader()
+            for fila in lector:
+                registros_leidos += 1
+                es_valido = True 
+                # aplico validaciones
+                if "decimalLatitude" in fila and "decimalLongitude" in fila:
+                    if not validaciones.validar_coordenadas(nombre_dataset, fila):
+                        es_valido = False
+                if "eventDate" in fila:
+                    if not validaciones.validar_fechas(nombre_dataset, fila["eventDate"]):
+                        es_valido = False
+                if "countryCode" in fila:
+                    if not validaciones.verificar_countryCode(nombre_dataset, fila["countryCode"]):
+                        es_valido = False   
+                if "coordinateUncertaintyInMeters" in fila:
+                    if not validaciones.verificar_incertidumbre(nombre_dataset, fila["coordinateUncertaintyInMeters"]):
+                        es_valido = False
+                if es_valido:
+                    # si el registro esta ok, lo escribo en el .temp
+                    escritor.writerow(fila)
+                else:
+                    # si contiene errores lo omito y aumento registros_eliminados
+                    registros_eliminados += 1
+                    #post sanitizar, reemplazo la ruta de salida por el .temp
+        os.replace(ruta_temporal, ruta_salida)
+        #un poquito de magia estetica para la consola
+        print("====================================================")
+        print(f"Sanitización de '{nombre_dataset}' finalizada")
+        print(f"Registros analizados: {registros_leidos}")
+        print(f"Registros eliminados (con errores): {registros_eliminados}")
+        print(f"Registros limpios guardados: {registros_leidos - registros_eliminados}")
+        print("====================================================")
+    except FileNotFoundError:
+        print(f"Error: No se encontro el dataset original en '{ruta_entrada}'")
+        if os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)
+            
+    except Exception as e: 
+        print(f"Se produjo un error al sanitizar: {e}")
+        if os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)
+        raise          
+
