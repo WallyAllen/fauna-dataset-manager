@@ -31,7 +31,7 @@ def actualizar_registros(dataset, ruta_archivo, ruta_salida, identificador, colu
     """
     Esta funcion busca el archivo que busca el nombre de la columna en el registro dicho y setea el nuevo valor  
     """
-    
+
     no_valido = False
     if "decimalLatitude" in valores_nuevos or "decimalLongitude" in valores_nuevos:
         if not validaciones.validar_coordenadas(dataset, ruta_salida, delimitador):
