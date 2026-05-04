@@ -82,9 +82,10 @@ def errores_taxonomicos(dataset,path):
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
         for fila in csv_reader:
-            for i in range(len(colum_dataset["taxonomica"])):
-                if fila[colum_dataset["taxonomica"][i]] == "":
+            for campo in colum_dataset["taxonomica"]:
+                if fila[campo] == "":
                     cant_errores += 1
+                    break
 
     return cant_errores
 
