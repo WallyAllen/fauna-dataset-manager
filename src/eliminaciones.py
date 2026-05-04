@@ -1,12 +1,7 @@
 import csv
 import os
-<<<<<<< HEAD
-import validaciones
-from log_operaciones import log
-=======
 from src import validaciones
 from src.log_operaciones import log
->>>>>>> 12c0dab519a95da918aa84818b92f93317f12657
 
 def _obtener_config_dataset(dataset):
     if dataset not in validaciones.TRADUCTOR_DATASETS:
@@ -77,6 +72,7 @@ def eliminar_por_lista(ruta_entrada, ruta_salida, columnaID, identificador, deli
             delimiter = config['delimitador']
         columnaID = _traducir_clave(dataset, columnaID)
 
+    identificadores = {str(x) for x in identificador}
     ruta_temporal= ruta_salida + '.temp'
     eliminados = 0
     try:
@@ -86,7 +82,7 @@ def eliminar_por_lista(ruta_entrada, ruta_salida, columnaID, identificador, deli
             escritor = csv.DictWriter(archivo_escritura, fieldnames=nombres_columnas, delimiter = delimiter)
             escritor.writeheader()
             for fila in lector:
-                if fila.get(columnaID) in identificador:
+                if fila.get(columnaID) in identificadores:
                     print("Valor encontrado dentro del registro")
                     eliminados += 1
                 else:
@@ -123,19 +119,30 @@ def cumple_condicion(valor_fila, condicion, valor_buscado):
     try:
         val_f = float(valor_fila)
         val_b = float(valor_buscado)
+        es_numerico = True
     except (ValueError, TypeError):
-        # si da error los dejo como string
+        # si no son numeros, solo comparo igualdad o desigualdad como strings
         val_f = str(valor_fila)
         val_b = str(valor_buscado)
+        es_numerico = False
         
     # evaluo que simbolo pasaron y retorno true o false
-    if condicion == '==': return val_f == val_b
-    elif condicion == '!=': return val_f != val_b
-    elif condicion == '>': return val_f > val_b
-    elif condicion == '<': return val_f < val_b
-    elif condicion == '>=': return val_f >= val_b
-    elif condicion == '<=': return val_f <= val_b
-    else: return False
+    if condicion == '==':
+        return val_f == val_b
+    elif condicion == '!=':
+        return val_f != val_b
+    elif not es_numerico:
+        return False
+    elif condicion == '>':
+        return val_f > val_b
+    elif condicion == '<':
+        return val_f < val_b
+    elif condicion == '>=':
+        return val_f >= val_b
+    elif condicion == '<=':
+        return val_f <= val_b
+    else:
+        return False
     
 def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valor, delimiter=',', dataset=None):
     """
@@ -204,7 +211,10 @@ def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador=Non
     
     def registrar_errores(resultado, motivo):
         if resultado and resultado.get('existe_error'):
-            lista_ids = resultado.get('lista_invalidos') or resultado.get('lista_ids') or resultado.get('id_duplicados') or []
+            lista_ids = []
+            for clave in ('lista_invalidos', 'lista_ids', 'id_duplicados'):
+                if resultado.get(clave):
+                    lista_ids.extend(resultado.get(clave))
             for rid in lista_ids:
                 if rid not in ids_a_eliminar:
                     ids_a_eliminar[rid] = motivo
