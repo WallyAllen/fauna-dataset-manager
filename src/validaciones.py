@@ -323,6 +323,7 @@ def verificar_incertidumbre(dataset,path):
 def resumen_calidad(dataset,path):
     cant_regist = count_records(path)
     result_coor = validar_coordenadas(dataset,path)
+    result_consist = constatar_coordenadas(dataset,path)
     result_fechas = validar_fechas(dataset,path)
     result_dupli = verificar_duplicados(dataset,path)
     result_taxo = errores_taxonomicos(dataset,path)
@@ -330,6 +331,7 @@ def resumen_calidad(dataset,path):
     resumen = {
             'registro' : cant_regist,
             'error_coordenadas' : result_coor['cantidad_invalidos'],
+            'inconsistencias_coordenadas' : result_consist['cantidad_inconsistencias'],
             'error_fechas' : total_fechas,
             'duplicados' : result_dupli['cantidad_duplicados'],
             'error_taxonomico' : result_taxo
@@ -343,6 +345,7 @@ def resumen_calidad(dataset,path):
     print(f"Cantidad total de registros analizados: {cant_regist}")
     print("-" * 50)
     print(f"Cantidad de errores en las coordenadas 'latitud' y 'longitud': {resumen['error_coordenadas']}")
+    print(f"Cantidad de inconsistencias en coordenadas (lat sin lon o viceversa): {resumen['inconsistencias_coordenadas']}")
     print(f"Cantidad de errores en las fechas: {total_fechas}")
     print(f"Cantidad de datos duplicados: {resumen['duplicados']}")
     print(f"Cantidad de registros con informacion taxonomica incompleta: {result_taxo}")
@@ -369,14 +372,18 @@ def evaluar_cotas_america(dataset,path,lat = False, lon = False):
         for fila in csv_reader:
             valor_lat = fila[colum_dataset["latitud"]]
             valor_lon = fila[colum_dataset["longitud"]]
-            if evaluar_error(valor_lat,LATITUD_SUR,LATITUD_NORTE) and not lon:
+            id_fila = fila[colum_dataset["id"]]
+            lat_invalida = evaluar_error(valor_lat, LATITUD_SUR, LATITUD_NORTE) and not lon
+            lon_invalida = evaluar_error(valor_lon, LONGITUD_OESTE, LONGITUD_ESTE) and not lat
+            if lat_invalida:
                 lat_inv += 1
                 exist_error = True
-                list_ids.append(fila[colum_dataset["id"]])
-            if evaluar_error(valor_lon,LONGITUD_OESTE,LONGITUD_ESTE) and not lat:
+            if lon_invalida:
                 lon_inv += 1
                 exist_error = True
-                list_ids.append(fila[colum_dataset["id"]])
+            if lat_invalida or lon_invalida:
+                if id_fila not in list_ids:
+                    list_ids.append(id_fila)
     if lat:
         return {
             'latitudes_invalidas' : lat_inv,
