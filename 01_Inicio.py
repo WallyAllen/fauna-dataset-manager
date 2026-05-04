@@ -1,18 +1,18 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title = "PLACEHOLDER",
+    page_title = "DARWINITE",
     page_icon = ":herb:",
     layout = "wide"
 )
 
-st.title("🌿 PLACEHOLDER", text_alignment="center")
+st.title("🌿 DARWINITE", text_alignment="center")
 st.divider()
 
 main_col, instructions_col = st.columns([2, 2])
 
 with main_col:
-    st.header("🎯 ¿Qué hace PLACEHOLDER?", divider=True)
+    st.header("🎯 ¿Qué hace Darwinite?", divider=True)
     st.write(""" 
         Esta plataforma tiene como propósito centralizar, analizar y visualizar información relacionada 
         con el avistamiento de especies del reino animal y vegetal en Argentina. A través de un procesamiento 
