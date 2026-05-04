@@ -12,10 +12,11 @@ TRADUCTOR_DATASETS ={
         'fecha' : 'eventDate',
         'id' : 'gbifID',
         'pais' : 'countryCode',
+        'tipo_pais' : 'alpha_2',
         'coordenada_rango' : '',
         'taxonomica' : ['scientificName','kingdom','phylum',
                         'class','order','family','genus',
-                        'specificEpithet','taxonRank'] 
+                        'specificEpithet','taxonRank']
     },
     'inaturalist': {
         'delimitador' : ',',
@@ -24,6 +25,7 @@ TRADUCTOR_DATASETS ={
         'fecha' : 'eventDate',
         'id' : 'id',
         'pais' : 'countryCode',
+        'tipo_pais' : 'alpha_2',
         'coordenada_rango' : 'coordinateUncertaintyInMeters',
         'taxonomica' : ['scientificName','taxonID',
                         'taxonRank','kingdom','phylum',
@@ -36,6 +38,7 @@ TRADUCTOR_DATASETS ={
         'fecha' : 'eventDate',
         'id' : 'id',
         'pais' : 'country',
+        'tipo_pais' : 'nombre',
         'coordenada_rango' : '',
         'taxonomica' : ['scientificName', 'specificEpithet', 'infraspecificEpithet',
                         'taxonRank','kingdom','phylum', 'higherClassification',
@@ -190,9 +193,12 @@ def validar_fechas(dataset,path):
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
         for fila in csv_reader:
+            valor = fila[colum_dataset["fecha"]]
+            if not valor:
+                continue
             try:
                 #convierte el string formate ISO en un dato tipo datetime
-                fecha = datetime.fromisoformat(fila[colum_dataset["fecha"]])
+                fecha = datetime.fromisoformat(valor)
                 if fecha.year > 2026: 
                     anio_post += 1
                     exist_error = True
@@ -253,9 +259,15 @@ def verificar_countryCode(dataset,path):
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
         for fila in csv_reader:
-            pais = pycountry.countries.get(alpha_2=fila[colum_dataset["pais"]])
-            if pais == None:
-                print(f"El codigo {fila[colum_dataset['pais']]} no es valido")
+            valor = fila[colum_dataset["pais"]]
+            if not valor:
+                continue
+            if colum_dataset['tipo_pais'] == 'alpha_2':
+                pais = pycountry.countries.get(alpha_2=valor)
+            else:
+                pais = pycountry.countries.get(name=valor)
+            if pais is None:
+                print(f"El pais '{valor}' no es valido")
                 exist_error = True
                 list_ids.append(fila[colum_dataset["id"]])
     result = {

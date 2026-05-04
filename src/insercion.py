@@ -11,6 +11,7 @@ from src.validaciones import (
     errores_taxonomicos,
     evaluar_cotas_america
 )
+from src.log_operaciones import log
 
 def create_record_structure(filepath, id_column='id', encoding='utf-8', delimiter='\t'):
     """
@@ -207,14 +208,19 @@ def insert_record(dataset_name, in_filepath, out_filepath):
     """
     if dataset_name not in TRADUCTOR_DATASETS:
         print(f"Dataset '{dataset_name}' no reconocido.")
+        log(dataset_name, "INSERT", 0, status="ERROR")
         return False
-        
+
     id_col = TRADUCTOR_DATASETS[dataset_name]['id']
     delim = TRADUCTOR_DATASETS[dataset_name]['delimitador']
-    
-    # Pre-calculamos el ID base inicial
-    current_base_id = get_next_base_id(dataset_name, in_filepath)
-    
+
+    try:
+        current_base_id = get_next_base_id(dataset_name, in_filepath)
+    except FileNotFoundError:
+        print(f"No se encontró el archivo de entrada: {in_filepath}")
+        log(dataset_name, "INSERT", 0, status="ERROR")
+        return False
+
     records_to_insert = []
     
     # Identificar columnas esenciales
@@ -242,6 +248,7 @@ def insert_record(dataset_name, in_filepath, out_filepath):
         print("Validando registro")
         if not validate_record(record, dataset_name):
             print("El registro ingresado no cumple con las validaciones. Se descartará.")
+            log(dataset_name, "INSERT", 0, status="ERROR")
         else:
             # Añadir los IDs correspondientes
             record = format_record_for_insertion(record, dataset_name, base_id=current_base_id)
@@ -256,25 +263,29 @@ def insert_record(dataset_name, in_filepath, out_filepath):
     if not records_to_insert:
         print("No se validó ningún registro para insertar. Operación cancelada.")
         return False
-    
-    # Lectura del original y escritura del nuevo archivo
-    os.makedirs(os.path.dirname(out_filepath), exist_ok=True)
-    
-    # Obtiene las columnas originales para el DictWriter
-    with open(in_filepath, 'r', encoding='utf-8') as fin:
-        reader = csv.DictReader(fin, delimiter=delim)
-        fieldnames = reader.fieldnames
-        
-    print("Creando nuevo archivo y copiando datos originales")
-    with open(in_filepath, 'r', encoding='utf-8') as fin, open(out_filepath, 'w', encoding='utf-8') as fout:
-        for line in fin:
-            fout.write(line)
-            
-    print(f"Anexando {len(records_to_insert)} nuevos registros al final")
-    with open(out_filepath, 'a', encoding='utf-8', newline='') as fout:
-        writer = csv.DictWriter(fout, fieldnames=fieldnames, delimiter=delim)
-        for rec in records_to_insert:
-            writer.writerow(rec)
-            
+
+    try:
+        os.makedirs(os.path.dirname(out_filepath), exist_ok=True)
+
+        with open(in_filepath, 'r', encoding='utf-8') as fin:
+            reader = csv.DictReader(fin, delimiter=delim)
+            fieldnames = reader.fieldnames
+
+        print("Creando nuevo archivo y copiando datos originales")
+        with open(in_filepath, 'r', encoding='utf-8') as fin, open(out_filepath, 'w', encoding='utf-8') as fout:
+            for line in fin:
+                fout.write(line)
+
+        print(f"Anexando {len(records_to_insert)} nuevos registros al final")
+        with open(out_filepath, 'a', encoding='utf-8', newline='') as fout:
+            writer = csv.DictWriter(fout, fieldnames=fieldnames, delimiter=delim)
+            for rec in records_to_insert:
+                writer.writerow(rec)
+    except OSError as e:
+        print(f"Error de archivo/sistema al generar la salida: {e}")
+        log(dataset_name, "INSERT", 0, status="ERROR")
+        return False
+
     print(f"Archivo generado en: {out_filepath}")
+    log(dataset_name, "INSERT", len(records_to_insert))
     return True

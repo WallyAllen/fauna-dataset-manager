@@ -1,34 +1,44 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title = "PLACEHOLDER",
+    page_title = "DARWINITE",
     page_icon = ":herb:",
     layout = "wide"
 )
 
-st.title("🌿 PLACEHOLDER", text_alignment="center")
+st.title("🌿 DARWINITE", text_alignment="center")
 st.divider()
 
-main_col, instructions_col = st.columns([2, 2])
+main_col, instructions_col = st.columns([1, 1])
 
 with main_col:
-    st.header("🎯 ¿Qué hace PLACEHOLDER?", divider=True)
+    st.header("🎯 ¿Qué hace Darwinite?", divider=True)
     st.write(""" 
         Esta plataforma tiene como propósito centralizar, analizar y visualizar información relacionada 
         con el avistamiento de especies del reino animal y vegetal en Argentina. A través de un procesamiento 
         de conjuntos de datos estandarizados, la aplicación permite realizar controles de calidad espacial y 
         temporal, sanitizar registros biológicos, y generar nuevas vistas de información listas para el análisis 
         estadístico. 
-        """)
-
-    st.header("🧬 Acerca de Darwin Core", divider=True)
-    st.write(""" 
+    
         El análisis estructurado de datos de biodiversidad es fundamental para comprender los ecosistemas y monitorear 
         los cambios en la distribución de especies. Al limpiar y unificar millones de registros provenientes de diversas 
         instituciones científicas, podemos transformar observaciones aisladas en evidencia sólida. Esto permite a 
         investigadores y organizaciones identificar patrones de migración, evaluar el impacto del cambio climático, 
         gestionar esfuerzos de conservación y desarrollar políticas públicas basadas en información confiable y 
         accesible globalmente.
+        """)
+
+    st.header("🧬 Acerca de Darwin Core", divider=True)
+    st.write(""" 
+        Darwin Core (DwC) es un estándar mantenido por Biodiversity Information Standards 
+        (TDWG) que define un vocabulario común para describir registros de biodiversidad. 
+        A través de campos como occurrenceID, scientificName, eventDate o decimalLatitude, 
+        permite que datos provenientes de museos, universidades y demás plataformas 
+        sean compatibles entre sí.
+
+        Se utiliza para integrar, publicar y reutilizar información biológica a escala 
+        global, y, en esta aplicación, sirve como referencia 
+        para validar y sanitizar los datasets antes de su análisis.
         """)
 
 with instructions_col:
@@ -48,4 +58,4 @@ with instructions_col:
     como el identificador único (occurrenceID), el nombre científico (scientificName) o el país de origen.
     * **(P4) Visualización:** Sección dedicada al análisis gráfico de la información de biodiversidad procesada, facilitando la interpretación 
     de los datos a través de representaciones visuales.
-    """, icon='📑')
+    """, icon="📑")
