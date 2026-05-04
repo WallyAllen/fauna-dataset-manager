@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="icon.ico" alt="Darwinite Logo" width="128"/>
+  <img src="icon.png" alt="Darwinite Logo" width="128"/>
 </div>
 
 # Darwinite - Procesamiento de Datasets Darwin Core
