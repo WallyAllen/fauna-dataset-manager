@@ -309,8 +309,11 @@ def verificar_incertidumbre(dataset,path):
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
         for fila in csv_reader:
+            valor = fila[colum_dataset["coordenada_rango"]]
+            if not valor:
+                continue
             try:
-                rango = float(fila[colum_dataset["coordenada_rango"]])
+                rango = float(valor)
                 if rango < 0 or rango > 100:
                     fuera_rango += 1
                     exist_error = True
