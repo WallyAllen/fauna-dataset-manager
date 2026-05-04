@@ -9,7 +9,7 @@ TRADUCTOR_DATASETS ={
         'delimitador' : '\t',
         'latitud' : 'decimalLatitude',
         'longitud' : 'decimalLongitude',
-        'fecha' : 'eventDate',
+        'fecha' : ['eventDate', 'dateIdentified', 'modified', 'georeferencedDate'],
         'id' : 'gbifID',
         'pais' : 'countryCode',
         'tipo_pais' : 'alpha_2',
@@ -22,7 +22,7 @@ TRADUCTOR_DATASETS ={
         'delimitador' : ',',
         'latitud' : 'decimalLatitude',
         'longitud' : 'decimalLongitude',
-        'fecha' : 'eventDate',
+        'fecha' : ['eventDate', 'dateIdentified', 'modified'],
         'id' : 'id',
         'pais' : 'countryCode',
         'tipo_pais' : 'alpha_2',
@@ -35,7 +35,7 @@ TRADUCTOR_DATASETS ={
         'delimitador' : ',',
         'latitud' : 'latitudeDecimal',
         'longitud' : 'longitudeDecimal',
-        'fecha' : 'eventDate',
+        'fecha' : ['eventDate'],
         'id' : 'id',
         'pais' : 'country',
         'tipo_pais' : 'nombre',
@@ -193,20 +193,20 @@ def validar_fechas(dataset,path):
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
         for fila in csv_reader:
-            valor = fila[colum_dataset["fecha"]]
-            if not valor:
-                continue
-            try:
-                #convierte el string formate ISO en un dato tipo datetime
-                fecha = datetime.fromisoformat(valor)
-                if fecha.year > 2026: 
-                    anio_post += 1
+            for columna_fecha in colum_dataset["fecha"]:
+                valor = fila[columna_fecha]
+                if not valor:
+                    continue
+                try:
+                    # 'Z' (UTC) solo es soportado por fromisoformat desde Python 3.11
+                    fecha = datetime.fromisoformat(valor.replace('Z', '+00:00'))
+                    if fecha.year > 2026:
+                        anio_post += 1
+                        exist_error = True
+                #Si la fecha no concuerda con el formate ISO significa que es una fecha invalida
+                except (ValueError,TypeError):
+                    fecha_inv += 1
                     exist_error = True
-            #Si la fecha no concuerda con el formate ISO significa que es una fecha invalida
-            except (ValueError,TypeError):
-                fecha_inv += 1
-                exist_error = True
-                #print("La fecha posee un formato invalido o no se puede interpretar como una")
     result = {
         'anios_posteriores' : anio_post,
         'fechas_invalidas' : fecha_inv,
