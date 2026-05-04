@@ -193,9 +193,12 @@ def validar_fechas(dataset,path):
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
         for fila in csv_reader:
+            valor = fila[colum_dataset["fecha"]]
+            if not valor:
+                continue
             try:
                 #convierte el string formate ISO en un dato tipo datetime
-                fecha = datetime.fromisoformat(fila[colum_dataset["fecha"]])
+                fecha = datetime.fromisoformat(valor)
                 if fecha.year > 2026: 
                     anio_post += 1
                     exist_error = True
