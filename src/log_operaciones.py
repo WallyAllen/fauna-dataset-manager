@@ -18,7 +18,7 @@ def current_date():
     return now.strftime("%Y-%m-%d %H:%M:%S")
 
 def log(dataset, op_type, affected, status=None):
-    f"""
+    """
     Ejercicio 7.B
     Registra en `logs/operations.log` una línea con la fecha/hora actual y 
     datos de la operación realizada sobre un dataset.

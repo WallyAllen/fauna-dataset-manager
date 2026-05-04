@@ -19,7 +19,7 @@ def parsear_linea(linea):
     Convierte una línea del log en un dict con las columnas pedidas.
     Formato esperado:
         fecha | dataset | operacion | N registros [| ERROR]
-    Retorna None si la línea no respeta el formato.
+    Retorna None si la línea no respeta el formato o la cantidad no es un entero.
     """
     partes = [p.strip() for p in linea.strip().split("|")]
     if len(partes) < 4:
@@ -29,14 +29,16 @@ def parsear_linea(linea):
     try:
         cantidad = int(cantidad_txt)
     except ValueError:
-        cantidad = 0
+        return None
+
+    estado = "ERROR" if len(partes) >= 5 and partes[4].upper() == "ERROR" else "OK"
 
     return {
         "fecha": partes[0],
         "dataset": partes[1],
-        "operación": partes[2],
+        "operacion": partes[2],
         "registros": cantidad,
-        "estado": partes[4] if len(partes) >= 5 else "OK",
+        "estado": estado,
     }
 
 
@@ -45,11 +47,15 @@ def leer_log(path):
     if not path.exists() or path.stat().st_size == 0:
         return []
     filas = []
-    with open(path, encoding="utf-8") as f:
-        for linea in f:
-            registro = parsear_linea(linea)
-            if registro is not None:
-                filas.append(registro)
+    try:
+        with open(path, encoding="utf-8") as f:
+            for linea in f:
+                registro = parsear_linea(linea)
+                if registro is not None:
+                    filas.append(registro)
+    except OSError as e:
+        st.error(f"No se pudo leer el archivo de log: {e}")
+        return []
     return filas
 
 
@@ -78,7 +84,7 @@ m4.metric("Última operación", ultima_fecha)
 st.divider()
 
 datasets = sorted({f["dataset"] for f in filas})
-operaciones = sorted({f["operación"] for f in filas})
+operaciones = sorted({f["operacion"] for f in filas})
 estados = sorted({f["estado"] for f in filas})
 
 f1, f2, f3 = st.columns(3)
@@ -92,7 +98,7 @@ with f3:
 filas_filtradas = [
     f for f in filas
     if f["dataset"] in sel_datasets
-    and f["operación"] in sel_ops
+    and f["operacion"] in sel_ops
     and f["estado"] in sel_estados
 ]
 
@@ -103,12 +109,12 @@ if not filas_filtradas:
 else:
     st.dataframe(
         list(reversed(filas_filtradas)),
-        width="stretch",
+        use_container_width=True,
         hide_index=True,
         column_config={
             "fecha": st.column_config.TextColumn("Fecha"),
             "dataset": st.column_config.TextColumn("Dataset"),
-            "operación": st.column_config.TextColumn("Operación"),
+            "operacion": st.column_config.TextColumn("Operación"),
             "registros": st.column_config.NumberColumn("Registros", format="%d"),
             "estado": st.column_config.TextColumn("Estado"),
         },
