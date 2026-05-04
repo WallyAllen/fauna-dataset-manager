@@ -1,5 +1,6 @@
 import csv
 import os
+from log_operaciones import log
 from src import validaciones
 from src.log_operaciones import log
 
