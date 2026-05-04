@@ -74,10 +74,12 @@ def errores_taxonomicos(dataset,path):
     cant_errores = 0
     print("Buscando errores en los datos taxonomicos...")
  
-    if dataset not in TRADUCTOR_DATASETS.keys():
-            print(f"El dataset {dataset} no existe")
-            return cant_errores
-    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+    if dataset not in TRADUCTOR_DATASETS:
+        raise ValueError(
+            f"Dataset '{dataset}' no reconocido. "
+            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+        )
+    colum_dataset = TRADUCTOR_DATASETS[dataset]
     
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
@@ -156,7 +158,7 @@ def constatar_coordenadas(dataset,path):
     cant_inconsistentes = 0
     list_ids = []
     print("Evaluando inconsistencias en las coordenadas...")
-    if dataset not in TRADUCTOR_DATASETS.keys():
+    if dataset not in TRADUCTOR_DATASETS:
             raise ValueError(
                 f"Dataset '{dataset}' no reconocido. "
                 f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
@@ -185,10 +187,12 @@ def validar_fechas(dataset,path):
     fecha_inv = 0
     exist_error = False
     print("Evaluando fechas del dataset...")
-    if dataset not in TRADUCTOR_DATASETS.keys():
-            print(f"El dataset {dataset} no existe")
-            return anio_post,fecha_inv,exist_error
-    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+    if dataset not in TRADUCTOR_DATASETS:
+        raise ValueError(
+            f"Dataset '{dataset}' no reconocido. "
+            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+        )
+    colum_dataset = TRADUCTOR_DATASETS[dataset]
 
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
@@ -223,10 +227,12 @@ def verificar_duplicados(dataset,path):
     set_id = set()
 
     print("Evaluando registros repetidos del dataset...")
-    if dataset not in TRADUCTOR_DATASETS.keys():
-            print(f"El dataset {dataset} no existe")
-            return cant_dupli, duplicados,exist_error
-    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+    if dataset not in TRADUCTOR_DATASETS:
+        raise ValueError(
+            f"Dataset '{dataset}' no reconocido. "
+            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+        )
+    colum_dataset = TRADUCTOR_DATASETS[dataset]
 
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
@@ -250,7 +256,7 @@ def verificar_countryCode(dataset,path):
     exist_error = False
     list_ids = []
     print("Evaluando errores en el campo 'countryCode' del dataset...")
-    if dataset not in TRADUCTOR_DATASETS.keys():
+    if dataset not in TRADUCTOR_DATASETS:
         raise ValueError(
             f"Dataset '{dataset}' no reconocido. "
             f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
@@ -284,10 +290,12 @@ def verificar_incertidumbre(dataset,path):
     exist_error = False
     list_ids = []
     print("Evaluando errores en el campo 'coordinateUncertainyInMeters' del dataset...")
-    if dataset not in TRADUCTOR_DATASETS.keys():
-            print(f"El dataset {dataset} no existe")
-            return exist_error
-    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+    if dataset not in TRADUCTOR_DATASETS:
+        raise ValueError(
+            f"Dataset '{dataset}' no reconocido. "
+            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+        )
+    colum_dataset = TRADUCTOR_DATASETS[dataset]
 
     if not colum_dataset['coordenada_rango']:
         return {
@@ -360,7 +368,7 @@ def evaluar_cotas_america(dataset,path,lat = False, lon = False):
     list_ids = []
     exist_error = False
     print("Evaluando cotas de coordenadas (America del sur) del dataset...")
-    if dataset not in TRADUCTOR_DATASETS.keys():
+    if dataset not in TRADUCTOR_DATASETS:
         raise ValueError(
             f"Dataset '{dataset}' no reconocido. "
             f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
