@@ -25,13 +25,14 @@ El proyecto hace uso de bibliotecas estándar de Python, pero requiere dependenc
 Para instalar las dependencias, abrí tu terminal en la raíz del proyecto (la carpeta `code/`) y ejecuta el siguiente comando:
 
 ```bash
-pip install pycountry jupyter
+pip install pycountry jupyter streamlit
 ```
 
 _Las bibliotecas requeridas actualmente son:_
 
 - `pycountry`: Para validaciones robustas de los códigos de países (ISO 3166-1 alpha-2).
 - `jupyter`: Para la ejecución interactiva de los Notebooks (`.ipynb`).
+- `streamlit`: Para ejecutar la aplicación web y visualización de datos.
 
 ---
 
@@ -50,6 +51,9 @@ _Las bibliotecas requeridas actualmente son:_
 ### 1. Ejecución vía Jupyter Notebooks
 
 Las operaciones principales están organizadas de forma visual y secuencial en Jupyter Notebooks para facilitar el control de los datos.
+Se recomienda ejecutar los notebooks en el orden de los ejercicios, oséase:
+
+`Lectura → validación → inserción → actualización → eliminación.`
 
 1. Abre tu terminal en la carpeta principal del proyecto (`code/`).
 2. Iniciá el servidor de Jupyter ejecutando:
@@ -57,6 +61,6 @@ Las operaciones principales están organizadas de forma visual y secuencial en J
    jupyter notebook
    ```
 3. En tu navegador, navegá hasta la carpeta `notebooks/`.
-4. Abrí el notebook que corresponda a la tarea que deseás realizar (por ejemplo, `insercion.ipynb`).
+4. Abrí el notebook que corresponda a la tarea que deseás realizar.
 5. Ejecutá las celdas secuencialmente de arriba hacia abajo presionando `Shift + Enter`.
 6. Si alguna de las celdas solicita entrada por teclado, la consola interactiva de la celda aparecerá debajo de ella esperando tus datos.
