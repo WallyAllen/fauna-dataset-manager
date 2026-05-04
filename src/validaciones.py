@@ -332,7 +332,13 @@ def verificar_incertidumbre(dataset,path):
 
 #3.G
 def resumen_calidad(dataset,path):
-    cant_regist = count_records(path)
+    if dataset not in TRADUCTOR_DATASETS:
+        raise ValueError(
+            f"Dataset '{dataset}' no reconocido. "
+            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+        )
+    colum_dataset = TRADUCTOR_DATASETS[dataset]
+    cant_regist = count_records(path, delimiter=colum_dataset['delimitador'])
     result_coor = validar_coordenadas(dataset,path)
     result_consist = constatar_coordenadas(dataset,path)
     result_fechas = validar_fechas(dataset,path)
