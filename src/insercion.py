@@ -214,10 +214,12 @@ def insert_record(dataset_name, in_filepath, out_filepath):
     id_col = TRADUCTOR_DATASETS[dataset_name]['id']
     delim = TRADUCTOR_DATASETS[dataset_name]['delimitador']
 
+    archivo_base = out_filepath if os.path.exists(out_filepath) else in_filepath
+    
     try:
-        current_base_id = get_next_base_id(dataset_name, in_filepath)
+        current_base_id = get_next_base_id(dataset_name, archivo_base)
     except FileNotFoundError:
-        print(f"No se encontró el archivo de entrada: {in_filepath}")
+        print(f"No se encontró el archivo base: {archivo_base}")
         log(dataset_name, "INSERT", 0, status="ERROR")
         return False
 
@@ -236,7 +238,7 @@ def insert_record(dataset_name, in_filepath, out_filepath):
             
     while True:
         # 1. Crear estructura vacía
-        record = create_record_structure(in_filepath, id_column=id_col, delimiter=delim)
+        record = create_record_structure(archivo_base, id_column=id_col, delimiter=delim)
         
         # 2. Pedir datos por teclado
         print("\n--- Ingrese los datos del nuevo registro ---")
@@ -267,16 +269,21 @@ def insert_record(dataset_name, in_filepath, out_filepath):
     try:
         os.makedirs(os.path.dirname(out_filepath), exist_ok=True)
 
-        with open(in_filepath, 'r', encoding='utf-8') as fin:
-            reader = csv.DictReader(fin, delimiter=delim)
-            fieldnames = reader.fieldnames
+        if not os.path.exists(out_filepath):
+            with open(in_filepath, 'r', encoding='utf-8') as fin:
+                reader = csv.DictReader(fin, delimiter=delim)
+                fieldnames = reader.fieldnames
 
-        print("Creando nuevo archivo y copiando datos originales")
-        with open(in_filepath, 'r', encoding='utf-8') as fin, open(out_filepath, 'w', encoding='utf-8') as fout:
-            for line in fin:
-                fout.write(line)
+            print("Creando nuevo archivo procesado copiando datos originales")
+            with open(in_filepath, 'r', encoding='utf-8') as fin, open(out_filepath, 'w', encoding='utf-8') as fout:
+                for line in fin:
+                    fout.write(line)
+        else:
+            with open(out_filepath, 'r', encoding='utf-8') as fin:
+                reader = csv.DictReader(fin, delimiter=delim)
+                fieldnames = reader.fieldnames
 
-        print(f"Anexando {len(records_to_insert)} nuevos registros al final")
+        print(f"Anexando {len(records_to_insert)} nuevos registros al archivo procesado")
         with open(out_filepath, 'a', encoding='utf-8', newline='') as fout:
             writer = csv.DictWriter(fout, fieldnames=fieldnames, delimiter=delim)
             for rec in records_to_insert:
