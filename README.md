@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="icon.ico" alt="Darwinite Logo" width="128"/>
+</div>
+
 # Darwinite - Procesamiento de Datasets Darwin Core
 
 Este proyecto provee herramientas de Python para interactuar, validar, buscar, insertar y eliminar registros de datasets biológicos bajo el estándar Darwin Core (DwC). Está configurado específicamente para trabajar con los datasets de la **Colección Ornitológica del IADIZA-CCT**, **iNaturalist** y **Xeno-canto**.
