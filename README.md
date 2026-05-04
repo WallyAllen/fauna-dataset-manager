@@ -25,7 +25,7 @@ El proyecto hace uso de bibliotecas estándar de Python, pero requiere dependenc
 Para instalar las dependencias, abrí tu terminal en la raíz del proyecto (la carpeta `code/`) y ejecuta el siguiente comando:
 
 ```bash
-pip install pycountry jupyter streamlit
+pip install -r requirements.txt
 ```
 
 _Las bibliotecas requeridas actualmente son:_
@@ -62,3 +62,9 @@ Se recomienda ejecutar los notebooks en el orden de los ejercicios, oséase:
 4. Abrí el notebook que corresponda a la tarea que deseás realizar.
 5. Ejecutá las celdas secuencialmente de arriba hacia abajo presionando `Shift + Enter`.
 6. Si alguna de las celdas solicita entrada por teclado, la consola interactiva de la celda aparecerá debajo de ella esperando tus datos.
+
+---
+
+## **Licencia**
+
+Este proyecto está licenciado bajo la **Licencia MIT**. Podés ver los detalles en el archivo [LICENSE](LICENSE).
