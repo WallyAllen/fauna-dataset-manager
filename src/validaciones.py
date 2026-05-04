@@ -103,7 +103,7 @@ def validar_coordenadas(dataset, path,lat = False, lon = False):
         delimitador (str): Separador de campos del archivo
 
     Returns:
-        tuple:
+        dict:
             - exist_error (bool): True si hay al menos un registro inválido
             - cant_inv (int): Cantidad de REGISTROS inválidos
             - list_inv (list[str]): IDs de los registros inválidos
@@ -289,7 +289,7 @@ def verificar_incertidumbre(dataset,path):
     no_dato = 0
     exist_error = False
     list_ids = []
-    print("Evaluando errores en el campo 'coordinateUncertainyInMeters' del dataset...")
+    print("Evaluando errores en el campo 'coordinateUncertaintyInMeters' del dataset...")
     if dataset not in TRADUCTOR_DATASETS:
         raise ValueError(
             f"Dataset '{dataset}' no reconocido. "
