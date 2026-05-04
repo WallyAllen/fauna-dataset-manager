@@ -109,7 +109,7 @@ if not filas_filtradas:
 else:
     st.dataframe(
         list(reversed(filas_filtradas)),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         column_config={
             "fecha": st.column_config.TextColumn("Fecha"),
