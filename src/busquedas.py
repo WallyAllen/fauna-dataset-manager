@@ -1,6 +1,5 @@
 import csv
 import os
-from log_operaciones import log
 from src import validaciones
 from src.log_operaciones import log
 
@@ -13,6 +12,17 @@ def _obtener_config_dataset(dataset):
         )
     return TRADUCTOR_DATASETS[dataset]
 
+
+def _valor_coincide(valor_fila, valor_buscado):
+    # si la fila no tiene la columna, get devuelve None
+    if valor_fila is None:
+        return valor_buscado is None or valor_buscado == ""
+    # si el filtro pide None, admitimos celda vacía
+    if valor_buscado is None:
+        return valor_fila == ""
+    return str(valor_fila) == str(valor_buscado)
+
+
 def buscar_registros(ruta_archivo, filtros, delimitador = ',', dataset=None):
     """
     Esta funcion busca registros en un archivo iterando con csv.dictreader y
@@ -22,17 +32,17 @@ def buscar_registros(ruta_archivo, filtros, delimitador = ',', dataset=None):
         config = _obtener_config_dataset(dataset)
         if delimitador == ',':
             delimitador = config['delimitador']
-        filtros = {config.get(col, col): str(val) for col, val in filtros.items()}
-
-    resultados = [] #inicializo la lista
-     
-    try: #Considero que el try-except se acoplan mejor a la logica de verificar la existencia del archivo
-            # con with open puedo abrir el archivo y saber que post uso va a estar cerrado. (evito usar .close() y etc etc)
+        filtros = {config.get(col, col): val for col, val in filtros.items()}
+    #inicializo la lista
+    resultados = []
+    #Considero que el try-except se acoplan mejor a la logica de verificar la existencia del archivo 
+    try:
+         #con with open puedo abrir el archivo y saber que post uso va a estar cerrado. (evito usar .close() y etc etc)
         with open(ruta_archivo, mode= 'r', encoding= 'utf-8') as archivo:
             # DictReader asume la primera fila como claves del diccionario 
             lector = csv.DictReader(archivo, delimiter = delimitador)
             resultados = list(filter( #filter me sirve para filtar los elementos que cumplan la condicion y #list me devuelve una lista
-                lambda fila: all(fila.get(col) == str(val) for col, val in filtros.items()), lector #utilizo lambda para 
+                lambda fila: all(_valor_coincide(fila.get(col), val) for col, val in filtros.items()), lector #utilizo lambda para 
             #no hacer una funcion entera. simplifique la logica de for e if con el metodo all() que verifica que los elementos de la lista 
             #sean == true en relacion a los parametros dados
                 ))
