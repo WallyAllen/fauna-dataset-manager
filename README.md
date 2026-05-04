@@ -53,7 +53,7 @@ _Las bibliotecas requeridas actualmente son:_
 Las operaciones principales están organizadas de forma visual y secuencial en Jupyter Notebooks para facilitar el control de los datos.
 Se recomienda ejecutar los notebooks en el orden de los ejercicios, oséase:
 
-`Lectura → validación → inserción → actualización → eliminación.`
+`Lectura → validación → inserción → actualización → eliminación → logging.`
 
 1. Abre tu terminal en la carpeta principal del proyecto (`code/`).
 2. Iniciá el servidor de Jupyter ejecutando:
