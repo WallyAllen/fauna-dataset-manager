@@ -31,6 +31,8 @@ def get_column_indices(filepath, encoding='utf-8', delimiter='\t'):
     """
     with open(filepath, encoding=encoding) as f:
         reader = csv.DictReader(f, delimiter=delimiter)
+        if not reader.fieldnames:
+            return {}
         return {nombre: indice for indice, nombre in enumerate(reader.fieldnames)}    
     
 def count_records(filepath, encoding='utf-8', delimiter='\t'):
@@ -52,10 +54,13 @@ def get_columns_with_nulls(filepath, encoding='utf-8', delimiter='\t'):
     """
     with open(filepath, encoding=encoding) as f:
         reader = csv.DictReader(f, delimiter=delimiter)
+        if not reader.fieldnames:
+            return []
         tiene_nulo = {col: False for col in reader.fieldnames}
         for row in reader:
             for col in reader.fieldnames:
-                if row[col] == '':
+                # row.get(col) puede ser None si la fila tiene menos campos que el header
+                if not row.get(col):
                     tiene_nulo[col] = True
     return [col for col, tiene in tiene_nulo.items() if tiene]
 
@@ -67,13 +72,18 @@ def get_null_percentage(filepath, encoding='utf-8', delimiter='\t'):
     """
     with open(filepath, encoding=encoding) as f:
         reader = csv.DictReader(f, delimiter=delimiter)
+        if not reader.fieldnames:
+            return {}
         nulos = {col: 0 for col in reader.fieldnames}
         total = 0
         for row in reader:
             total += 1
             for col in reader.fieldnames:
-                if row[col] == '':
+                # row.get(col) puede ser None si la fila tiene menos campos que el header
+                if not row.get(col):
                     nulos[col] += 1
+    if total == 0:
+        return {col: 0.0 for col in nulos}
     return {col: round((nulos[col] / total) * 100, 2) for col in nulos}
 
 def get_distinct_count(filepath, column, encoding='utf-8', delimiter='\t'):
@@ -84,13 +94,15 @@ def get_distinct_count(filepath, column, encoding='utf-8', delimiter='\t'):
     """
     with open(filepath, encoding=encoding) as f:
         reader = csv.DictReader(f, delimiter=delimiter)
-        if column not in reader.fieldnames:
+        if not reader.fieldnames or column not in reader.fieldnames:
             print(f"La columna '{column}' no existe en el dataset.")
             return None
         valores = set()
         for row in reader:
-            if row[column] != '':
-                valores.add(row[column])
+            valor = row.get(column)
+            # check truthy: descarta '' y None (filas malformadas)
+            if valor:
+                valores.add(valor)
     return len(valores)
 
 def get_value_frequency(filepath, column, encoding='utf-8', delimiter='\t'):
@@ -101,17 +113,15 @@ def get_value_frequency(filepath, column, encoding='utf-8', delimiter='\t'):
     """
     with open(filepath, encoding=encoding) as f:
         reader = csv.DictReader(f, delimiter=delimiter)
-        if column not in reader.fieldnames:
+        if not reader.fieldnames or column not in reader.fieldnames:
             print(f"La columna '{column}' no existe en el dataset.")
             return None
         frecuencia = {}
         for row in reader:
-            valor = row[column]
-            if valor != '':
-                if valor in frecuencia:
-                    frecuencia[valor] += 1
-                else:
-                    frecuencia[valor] = 1
+            valor = row.get(column)
+            # check truthy: descarta '' y None (filas malformadas)
+            if valor:
+                frecuencia[valor] = frecuencia.get(valor, 0) + 1
     return frecuencia
 
 
@@ -126,32 +136,41 @@ def get_column_stats(filepath, column, col_type, encoding='utf-8', delimiter='\t
     """
     with open(filepath, encoding=encoding) as f:
         reader = csv.DictReader(f, delimiter=delimiter)
-        if column not in reader.fieldnames:
+        if not reader.fieldnames or column not in reader.fieldnames:
             print(f"La columna '{column}' no existe en el dataset.")
             return None
 
         valores = []
         for row in reader:
-            if row[column] != '':
-                valores.append(row[column])
+            valor = row.get(column)
+            if valor:
+                valores.append(valor)
 
     if not valores:
         print(f"La columna '{column}' está completamente vacía.")
         return None
 
-    if col_type == 'numeric':
-        numeros = [float(v) for v in valores]
+    if col_type in ('numeric', 'coordinate'):
+        numeros = []
+        for v in valores:
+            try:
+                numeros.append(float(v))
+            except (ValueError, TypeError):
+                # ignoramos valores que no se puedan parsear como número
+                continue
+        if not numeros:
+            print(f"La columna '{column}' no contiene valores numéricos válidos.")
+            return None
+        if col_type == 'numeric':
+            return {
+                'min': min(numeros),
+                'max': max(numeros),
+                'promedio': round(sum(numeros) / len(numeros), 2)
+            }
+        # col_type == 'coordinate'
         return {
             'min': min(numeros),
-            'max': max(numeros),
-            'promedio': round(sum(numeros) / len(numeros), 2)
-        }
-
-    elif col_type == 'coordinate':
-        coordenadas = [float(v) for v in valores]
-        return {
-            'min': min(coordenadas),
-            'max': max(coordenadas)
+            'max': max(numeros)
         }
 
     elif col_type == 'text':
@@ -173,9 +192,12 @@ def get_empty_columns(filepath, encoding='utf-8', delimiter='\t'):
     """
     with open(filepath, encoding=encoding) as f:
         reader = csv.DictReader(f, delimiter=delimiter)
+        if not reader.fieldnames:
+            return []
         tiene_dato = {col: False for col in reader.fieldnames}
         for row in reader:
             for col in reader.fieldnames:
-                if row[col] != '':
+                # check truthy: None (fila malformada) o '' cuentan como vacío
+                if row.get(col):
                     tiene_dato[col] = True
     return [col for col, tiene in tiene_dato.items() if not tiene]
