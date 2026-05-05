@@ -18,11 +18,29 @@ Este proyecto provee herramientas de Python para interactuar, validar, buscar, i
 
 ## **Requisitos y Configuración Inicial**
 
-El proyecto hace uso de bibliotecas estándar de Python, pero requiere dependencias externas para funciones específicas de validación geográfica y ejecución de libretas interactivas.
+El proyecto hace uso de bibliotecas estándar de Python, pero requiere dependencias externas para funciones específicas de validación geográfica, ejecución de libretas interactivas y la interfaz web.
 
-### **Instalación de dependencias**
+### **1. Crear un Entorno Virtual**
 
-Para instalar las dependencias, abrí tu terminal en la raíz del proyecto (la carpeta `code/`) y ejecuta el siguiente comando:
+Se recomienda utilizar un entorno virtual (`venv`) para aislar las dependencias del proyecto y evitar conflictos. Abrí la terminal en la raíz del proyecto (la carpeta `code/`) y ejecutá, según tu sistema operativo:
+
+- **Linux**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+- **Windows**
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+### **2. Instalación de dependencias**
+
+Con el entorno virtual activado, instalá las dependencias ejecutando el siguiente comando:
 
 ```bash
 pip install -r requirements.txt
@@ -42,6 +60,7 @@ _Las bibliotecas requeridas actualmente son:_
   - `lectura.py`, `validaciones.py`, `insercion.py`, `busquedas.py`, `eliminaciones.py`, `log_operaciones.py`.
 - `notebooks/`: Jupyter Notebooks utilizados como interfaz de usuario para interactuar paso a paso con los módulos.
 - `raw_datasets/`: Archivos originales en formato crudo (.txt, .csv) de los datasets biológicos.
+  - **Recomendamos encarecidamente llamar los datasets de la forma: `iadiza`, `inaturalist`, y `xeno-canto` por compatibilidad**
 - `processed_datasets/`: Directorio destino donde se guardan los archivos resultantes tras realizar operaciones de inserción o depuración.
 
 ---
