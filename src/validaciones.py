@@ -199,6 +199,8 @@ def validar_fechas(dataset,path):
 
         for fila in csv_reader:
             for columna_fecha in colum_dataset["fecha"]:
+                if columna_fecha not in fila:
+                    continue
                 valor = fila[columna_fecha]
                 if not valor:
                     continue
