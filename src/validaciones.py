@@ -41,8 +41,8 @@ TRADUCTOR_DATASETS ={
         'tipo_pais' : 'nombre',
         'coordenada_rango' : '',
         'taxonomica' : ['scientificName', 'specificEpithet', 'infraspecificEpithet',
-                        'taxonRank','kingdom','phylum', 'higherClassification',
-                        'class','order','family','genus','nomenclaturaCode',
+                        'taxonRank','kingdom', 'higherClassification',
+                        'family','genus','nomenclaturalCode',
                         'vernacularName','identificationRemarks']
 
     }
@@ -85,6 +85,8 @@ def errores_taxonomicos(dataset,path):
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
         for fila in csv_reader:
             for campo in colum_dataset["taxonomica"]:
+                if campo not in fila:
+                    continue
                 if fila[campo] == "":
                     cant_errores += 1
                     break
