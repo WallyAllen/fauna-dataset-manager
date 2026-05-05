@@ -60,6 +60,7 @@ _Las bibliotecas requeridas actualmente son:_
   - `lectura.py`, `validaciones.py`, `insercion.py`, `busquedas.py`, `eliminaciones.py`, `log_operaciones.py`.
 - `notebooks/`: Jupyter Notebooks utilizados como interfaz de usuario para interactuar paso a paso con los módulos.
 - `raw_datasets/`: Archivos originales en formato crudo (.txt, .csv) de los datasets biológicos.
+  - **Recomendamos encarecidamente llamar los datasets de la forma: `iadiza`, `inaturalist`, y `xeno-canto` por compatibilidad**
 - `processed_datasets/`: Directorio destino donde se guardan los archivos resultantes tras realizar operaciones de inserción o depuración.
 
 ---
