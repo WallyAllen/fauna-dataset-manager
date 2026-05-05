@@ -59,7 +59,6 @@ def get_columns_with_nulls(filepath, encoding='utf-8', delimiter='\t'):
         tiene_nulo = {col: False for col in reader.fieldnames}
         for row in reader:
             for col in reader.fieldnames:
-                # row.get(col) puede ser None si la fila tiene menos campos que el header
                 if not row.get(col):
                     tiene_nulo[col] = True
     return [col for col, tiene in tiene_nulo.items() if tiene]
@@ -79,7 +78,6 @@ def get_null_percentage(filepath, encoding='utf-8', delimiter='\t'):
         for row in reader:
             total += 1
             for col in reader.fieldnames:
-                # row.get(col) puede ser None si la fila tiene menos campos que el header
                 if not row.get(col):
                     nulos[col] += 1
     if total == 0:
@@ -100,7 +98,6 @@ def get_distinct_count(filepath, column, encoding='utf-8', delimiter='\t'):
         valores = set()
         for row in reader:
             valor = row.get(column)
-            # check truthy: descarta '' y None (filas malformadas)
             if valor:
                 valores.add(valor)
     return len(valores)
@@ -119,7 +116,6 @@ def get_value_frequency(filepath, column, encoding='utf-8', delimiter='\t'):
         frecuencia = {}
         for row in reader:
             valor = row.get(column)
-            # check truthy: descarta '' y None (filas malformadas)
             if valor:
                 frecuencia[valor] = frecuencia.get(valor, 0) + 1
     return frecuencia
@@ -156,7 +152,6 @@ def get_column_stats(filepath, column, col_type, encoding='utf-8', delimiter='\t
             try:
                 numeros.append(float(v))
             except (ValueError, TypeError):
-                # ignoramos valores que no se puedan parsear como número
                 continue
         if not numeros:
             print(f"La columna '{column}' no contiene valores numéricos válidos.")
@@ -167,7 +162,6 @@ def get_column_stats(filepath, column, col_type, encoding='utf-8', delimiter='\t
                 'max': max(numeros),
                 'promedio': round(sum(numeros) / len(numeros), 2)
             }
-        # col_type == 'coordinate'
         return {
             'min': min(numeros),
             'max': max(numeros)
@@ -197,7 +191,6 @@ def get_empty_columns(filepath, encoding='utf-8', delimiter='\t'):
         tiene_dato = {col: False for col in reader.fieldnames}
         for row in reader:
             for col in reader.fieldnames:
-                # check truthy: None (fila malformada) o '' cuentan como vacío
                 if row.get(col):
                     tiene_dato[col] = True
     return [col for col, tiene in tiene_dato.items() if not tiene]
