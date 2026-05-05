@@ -5,3 +5,4 @@ processed_datasets/
 *.zip
 __pycache__/
 logs/*.log
+.venv/
