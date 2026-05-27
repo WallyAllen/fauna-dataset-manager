@@ -7,8 +7,7 @@ st.set_page_config(
     layout = "wide"
 )
 
-active_dataset = get_current_dataset()
-st.sidebar.caption(f"Seleccionado: {active_dataset}")
+get_current_dataset()
 
 st.title("🌿 DARWINITE", text_alignment="center")
 st.divider()

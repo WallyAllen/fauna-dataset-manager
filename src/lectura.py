@@ -1,22 +1,25 @@
 import csv
 from pathlib import Path
 import pandas as pd
-from src.dataset_config import TRADUCTOR_DATASETS
+from src.dataset_config import TRADUCTOR_DATASETS, get_dataset_filepath
 
 
-def load_dataframe(dataset_name, filepath, encoding='utf-8'):
+def load_dataframe(dataset_name, filepath=None, encoding='utf-8'):
     """
     Ejercicio 1.A (Parte II)
     Carga un dataset completo en memoria como DataFrame de pandas.
 
-    Usa la configuración del traductor para respetar delimitador y, si existe
-    en la configuración, también el encoding del dataset.
+    Si no se pasa filepath, usa el archivo de processed_datasets/ de la etapa 1.
+    Respeta delimitador y encoding del traductor.
     """
     if dataset_name not in TRADUCTOR_DATASETS:
         raise ValueError(
             f"Dataset '{dataset_name}' no reconocido. "
             f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
         )
+
+    if filepath is None:
+        filepath = get_dataset_filepath(dataset_name)
 
     config = TRADUCTOR_DATASETS[dataset_name]
     delimiter = config['delimitador']

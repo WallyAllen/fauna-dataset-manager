@@ -10,8 +10,7 @@ st.set_page_config(
     layout="wide",
 )
 
-active_dataset = get_current_dataset()
-st.sidebar.caption(f"Seleccionado: {active_dataset}")
+get_current_dataset()
 
 st.title("🛰️ Estado del sistema")
 st.caption(f"Lectura del archivo `{LOG_FILE.relative_to(LOG_FILE.parents[1])}`")
