@@ -1,10 +1,14 @@
 import streamlit as st
+from src.ui_state import get_current_dataset
 
 st.set_page_config(
     page_title = "DARWINITE",
     page_icon = ":herb:",
     layout = "wide"
 )
+
+active_dataset = get_current_dataset()
+st.sidebar.caption(f"Seleccionado: {active_dataset}")
 
 st.title("🌿 DARWINITE", text_alignment="center")
 st.divider()

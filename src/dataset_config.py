@@ -1,6 +1,6 @@
 """
-Dataset metadata (delimiter, column mappings) shared across the app.
-Kept in a standalone module to avoid circular imports between lectura, validaciones, and ui_state.
+Metadatos del dataset (delimitador, columnas) compartidos en toda la app.   
+Guardados en un módulo aparte para evitar circular imports.
 """
 
 TRADUCTOR_DATASETS = {

@@ -1,5 +1,6 @@
 import streamlit as st
 from pathlib import Path
+from src.ui_state import get_current_dataset
 
 LOG_FILE = Path(__file__).resolve().parents[1] / "logs" / "operations.log"
 
@@ -8,6 +9,9 @@ st.set_page_config(
     page_icon=":satellite_antenna:",
     layout="wide",
 )
+
+active_dataset = get_current_dataset()
+st.sidebar.caption(f"Seleccionado: {active_dataset}")
 
 st.title("🛰️ Estado del sistema")
 st.caption(f"Lectura del archivo `{LOG_FILE.relative_to(LOG_FILE.parents[1])}`")
