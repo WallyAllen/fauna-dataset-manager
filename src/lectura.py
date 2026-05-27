@@ -1,7 +1,7 @@
 import csv
 from pathlib import Path
 import pandas as pd
-from src.validaciones import TRADUCTOR_DATASETS
+from src.dataset_config import TRADUCTOR_DATASETS
 
 
 def load_dataframe(dataset_name, filepath, encoding='utf-8'):
