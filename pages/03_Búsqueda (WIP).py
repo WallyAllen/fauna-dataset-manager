@@ -90,5 +90,23 @@ df = buscar_en_dataframe(
     rango_fecha=(col_fecha, fecha_desde, fecha_hasta) if rango_disp else None,
 )
 
+# --- Ejercicio 2.C — columnas relevantes ---
+# Criterio: ID + nombre científico + ubicación (país/provincia) + observador +
+# fecha primaria + nivel taxonómico (taxonRank, family, genus).
+# Se excluyen coordenadas (reservadas para el mapa en P4) y taxonomía alta
+# (kingdom, phylum, class, order) que no aportan valor en una búsqueda puntual.
+_CANDIDATE_DISPLAY = [
+    config['id'],
+    'scientificName',
+    col_pais,
+    col_prov,
+    col_obs,
+    col_fecha,
+    'taxonRank',
+    'family',
+    'genus',
+]
+display_cols = [c for c in _CANDIDATE_DISPLAY if c and c in df.columns]
+
 st.markdown(f"**{len(df):,} registros encontrados**")
-st.dataframe(df, use_container_width=True, hide_index=True)
+st.dataframe(df[display_cols], use_container_width=True, hide_index=True)
