@@ -2,16 +2,11 @@ import csv
 import os
 from src import validaciones
 from src.log_operaciones import log
+from src.dataset_config import TRADUCTOR_DATASETS, get_dataset_config
 
-def _obtener_config_dataset(dataset):
-    if dataset not in validaciones.TRADUCTOR_DATASETS:
-        raise ValueError(
-            f"Dataset '{dataset}' no reconocido. Opciones válidas: {list(validaciones.TRADUCTOR_DATASETS.keys())}"
-        )
-    return validaciones.TRADUCTOR_DATASETS[dataset]
 
 def _traducir_clave(dataset, clave):
-    config = _obtener_config_dataset(dataset)
+    config = get_dataset_config(dataset)
     return config.get(clave, clave)
 
 def eliminar_por_identificador(ruta_entrada, ruta_salida, columnaID, identificador, delimiter = ',', dataset=None):
@@ -19,7 +14,7 @@ def eliminar_por_identificador(ruta_entrada, ruta_salida, columnaID, identificad
     Esta función elimina un registro del dataset a partir del identificador recibido.
     """
     if dataset is not None:
-        config = _obtener_config_dataset(dataset)
+        config = get_dataset_config(dataset)
         if delimiter == ',':
             delimiter = config['delimitador']
         columnaID = _traducir_clave(dataset, columnaID)
@@ -67,7 +62,7 @@ def eliminar_por_lista(ruta_entrada, ruta_salida, columnaID, identificador, deli
     Esta funcion elimina registros del data_set a partir de la lista recibida.
     """
     if dataset is not None:
-        config = _obtener_config_dataset(dataset)
+        config = get_dataset_config(dataset)
         if delimiter == ',':
             delimiter = config['delimitador']
         columnaID = _traducir_clave(dataset, columnaID)
@@ -149,7 +144,7 @@ def eliminar_por_condicion(ruta_entrada, ruta_salida, columnaID, condicion, valo
         Esta funcion elimina un registro si cumple la condición.
     """
     if dataset is not None:
-        config = _obtener_config_dataset(dataset)
+        config = get_dataset_config(dataset)
         if delimiter == ',':
             delimiter = config['delimitador']
         columnaID = _traducir_clave(dataset, columnaID)
@@ -197,7 +192,7 @@ def sanitizar_dataset(nombre_dataset, ruta_entrada, ruta_salida, delimitador=Non
     Sanitiza un dataset completo evaluando cada registro con las funciones de validacion
     Los registros con errores son omitidos en el nuevo archivo limpio.
     """
-    config = _obtener_config_dataset(nombre_dataset)
+    config = get_dataset_config(nombre_dataset)
     if delimitador is None:
         delimitador = config['delimitador']
     

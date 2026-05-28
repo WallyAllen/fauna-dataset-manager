@@ -74,3 +74,14 @@ def get_dataset_filepath(dataset_name):
             f"Opciones válidas: {list(DATASET_PROCESSED_FILES.keys())}"
         )
     return PROCESSED_DATASETS_DIR / DATASET_PROCESSED_FILES[dataset_name]
+
+def get_dataset_config(dataset_name):
+    """
+    Valida el nombre del dataset y retorna su configuración.
+    """
+    if dataset_name not in TRADUCTOR_DATASETS:
+        raise ValueError(
+            f"Dataset '{dataset_name}' no reconocido. "
+            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
+        )
+    return TRADUCTOR_DATASETS[dataset_name]

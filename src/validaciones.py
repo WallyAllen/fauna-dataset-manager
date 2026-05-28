@@ -2,7 +2,7 @@ from pathlib import Path
 from datetime import datetime
 import csv
 import pycountry
-from src.dataset_config import TRADUCTOR_DATASETS
+from src.dataset_config import TRADUCTOR_DATASETS, get_dataset_config
 from src.lectura import count_records
 
 LATITUD_NORTE = 13
@@ -30,12 +30,7 @@ def errores_taxonomicos(dataset,path):
     cant_errores = 0
     print("Buscando errores en los datos taxonomicos...")
  
-    if dataset not in TRADUCTOR_DATASETS:
-        raise ValueError(
-            f"Dataset '{dataset}' no reconocido. "
-            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
-        )
-    colum_dataset = TRADUCTOR_DATASETS[dataset]
+    colum_dataset = get_dataset_config(dataset)
     
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
@@ -71,13 +66,8 @@ def validar_coordenadas(dataset, path,lat = False, lon = False):
         ValueError: Si el delimitador no es un string de un carácter
     """
 
-    if dataset not in TRADUCTOR_DATASETS:
-        raise ValueError(
-            f"Dataset '{dataset}' no reconocido. "
-            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
-        )
-
-    colum_dataset = TRADUCTOR_DATASETS[dataset]
+    colum_dataset = get_dataset_config(dataset)
+    
     cant_inv = 0
     list_inv = []
     exist_error = False
@@ -116,12 +106,8 @@ def constatar_coordenadas(dataset,path):
     cant_inconsistentes = 0
     list_ids = []
     print("Evaluando inconsistencias en las coordenadas...")
-    if dataset not in TRADUCTOR_DATASETS:
-            raise ValueError(
-                f"Dataset '{dataset}' no reconocido. "
-                f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
-            )
-    else: colum_dataset = TRADUCTOR_DATASETS[dataset]
+
+    colum_dataset = get_dataset_config(dataset)
 
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
@@ -145,12 +131,8 @@ def validar_fechas(dataset,path):
     fecha_inv = 0
     exist_error = False
     print("Evaluando fechas del dataset...")
-    if dataset not in TRADUCTOR_DATASETS:
-        raise ValueError(
-            f"Dataset '{dataset}' no reconocido. "
-            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
-        )
-    colum_dataset = TRADUCTOR_DATASETS[dataset]
+
+    colum_dataset = get_dataset_config(dataset)
 
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
@@ -187,12 +169,8 @@ def verificar_duplicados(dataset,path):
     set_id = set()
 
     print("Evaluando registros repetidos del dataset...")
-    if dataset not in TRADUCTOR_DATASETS:
-        raise ValueError(
-            f"Dataset '{dataset}' no reconocido. "
-            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
-        )
-    colum_dataset = TRADUCTOR_DATASETS[dataset]
+
+    colum_dataset = get_dataset_config(dataset)
 
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
@@ -216,12 +194,9 @@ def verificar_countryCode(dataset,path):
     exist_error = False
     list_ids = []
     print("Evaluando errores en el campo 'countryCode' del dataset...")
-    if dataset not in TRADUCTOR_DATASETS:
-        raise ValueError(
-            f"Dataset '{dataset}' no reconocido. "
-            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
-        )
-    colum_dataset = TRADUCTOR_DATASETS[dataset]
+
+    colum_dataset = get_dataset_config(dataset)
+
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 
@@ -250,12 +225,8 @@ def verificar_incertidumbre(dataset,path):
     exist_error = False
     list_ids = []
     print("Evaluando errores en el campo 'coordinateUncertaintyInMeters' del dataset...")
-    if dataset not in TRADUCTOR_DATASETS:
-        raise ValueError(
-            f"Dataset '{dataset}' no reconocido. "
-            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
-        )
-    colum_dataset = TRADUCTOR_DATASETS[dataset]
+
+    colum_dataset = get_dataset_config(dataset)
 
     if not colum_dataset['coordenada_rango']:
         return {
@@ -292,12 +263,9 @@ def verificar_incertidumbre(dataset,path):
 
 #3.G
 def resumen_calidad(dataset,path):
-    if dataset not in TRADUCTOR_DATASETS:
-        raise ValueError(
-            f"Dataset '{dataset}' no reconocido. "
-            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
-        )
-    colum_dataset = TRADUCTOR_DATASETS[dataset]
+
+    colum_dataset = get_dataset_config(dataset)
+
     cant_regist = count_records(path, delimiter=colum_dataset['delimitador'])
     result_coor = validar_coordenadas(dataset,path)
     result_consist = constatar_coordenadas(dataset,path)
@@ -337,12 +305,9 @@ def evaluar_cotas_america(dataset,path,lat = False, lon = False):
     list_ids = []
     exist_error = False
     print("Evaluando cotas de coordenadas (America del sur) del dataset...")
-    if dataset not in TRADUCTOR_DATASETS:
-        raise ValueError(
-            f"Dataset '{dataset}' no reconocido. "
-            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
-        )
-    colum_dataset = TRADUCTOR_DATASETS[dataset]
+
+    colum_dataset = get_dataset_config(dataset)
+    
     with open(path, "r", encoding="utf-8") as file:
         csv_reader = csv.DictReader(file,delimiter = colum_dataset['delimitador'])
 

@@ -4,16 +4,7 @@ from datetime import datetime
 import pycountry
 from src import validaciones
 from src.log_operaciones import log
-
-TRADUCTOR_DATASETS = validaciones.TRADUCTOR_DATASETS
-
-
-def _obtener_config_dataset(dataset):
-    if dataset not in TRADUCTOR_DATASETS:
-        raise ValueError(
-            f"Dataset '{dataset}' no reconocido. Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
-        )
-    return TRADUCTOR_DATASETS[dataset]
+from src.dataset_config import TRADUCTOR_DATASETS, get_dataset_config
 
 
 def _traducir_clave_unica(clave, config):
@@ -74,7 +65,7 @@ def buscar_registros(ruta_archivo, filtros, delimitador=None, dataset=None):
     si CUALQUIERA de esas columnas coincide con el valor buscado.
     """
     if dataset is not None:
-        config = _obtener_config_dataset(dataset)
+        config = get_dataset_config(dataset)
         if delimitador is None:
             delimitador = config['delimitador']
         # cada filtro queda como (lista_de_columnas_reales, valor_buscado)
@@ -186,7 +177,7 @@ def actualizar_registros(ruta_archivo, ruta_salida, identificador, columnaID,
     config = None
 
     if dataset is not None:
-        config = _obtener_config_dataset(dataset)
+        config = get_dataset_config(dataset)
         if delimitador is None:
             delimitador = config['delimitador']
         columnaID = _traducir_clave_unica(columnaID, config)

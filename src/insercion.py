@@ -2,7 +2,6 @@ import csv
 import random
 import os
 from src.validaciones import (
-    TRADUCTOR_DATASETS,
     validar_coordenadas,
     constatar_coordenadas,
     validar_fechas,
@@ -12,6 +11,7 @@ from src.validaciones import (
     evaluar_cotas_america
 )
 from src.log_operaciones import log
+from src.dataset_config import TRADUCTOR_DATASETS
 
 def create_record_structure(filepath, id_column='id', encoding='utf-8', delimiter='\t'):
     """
