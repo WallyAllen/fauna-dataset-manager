@@ -1,6 +1,7 @@
 import streamlit as st
 from src.ui_state import get_current_dataset
 from src.lectura import load_dataframe
+from src.busquedas import buscar_en_dataframe
 
 st.set_page_config(
     page_title="Búsqueda",
@@ -28,9 +29,11 @@ with col_texto:
 with col_valor:
     texto_buscado = st.text_input("Texto a buscar (substring, sin distinción de mayúsculas)")
 
-df = df_full.copy()
-if texto_buscado and col_seleccionada in df.columns:
-    df = df[df[col_seleccionada].astype(str).str.contains(texto_buscado, case=False, na=False)]
+df = buscar_en_dataframe(
+    df_full,
+    dataset=dataset_name,
+    texto_libre=(col_seleccionada, texto_buscado) if texto_buscado else None,
+)
 
 st.markdown(f"**{len(df):,} registros encontrados**")
 st.dataframe(df, use_container_width=True, hide_index=True)
