@@ -1,7 +1,9 @@
 import streamlit as st
+from datetime import date
 from src.ui_state import get_current_dataset
 from src.lectura import load_dataframe
 from src.busquedas import buscar_en_dataframe
+from src.dataset_config import get_dataset_config
 
 st.set_page_config(
     page_title="Búsqueda",
@@ -14,13 +16,15 @@ dataset_name = get_current_dataset()
 try:
     df_full = load_dataframe(dataset_name)
 except Exception:
-    st.warning("No hay datos disponibles. Revisa que hatyas generado los archivos procesados con `generar_processed.py`.")
+    st.warning("No hay datos disponibles. Revisa que hayas generado los archivos procesados con `generar_processed.py`.")
     st.stop()
 
 st.title("Búsqueda de registros")
 st.divider()
 
-# --- Ejercicio 2.A---
+config = get_dataset_config(dataset_name)
+
+# --- Ejercicio 2.A ---
 st.subheader("Búsqueda por texto libre")
 
 col_texto, col_valor = st.columns([1, 2])
@@ -29,10 +33,61 @@ with col_texto:
 with col_valor:
     texto_buscado = st.text_input("Texto a buscar (substring, sin distinción de mayúsculas)")
 
+# --- Ejercicio 2.B ---
+st.subheader("Filtros combinados")
+
+col_sci   = "scientificName" if "scientificName" in df_full.columns else None
+col_obs   = config.get("observador")
+col_pais  = config.get("pais")
+col_prov  = config.get("provincia")
+col_fecha_raw = config.get("fecha")
+col_fecha = col_fecha_raw[0] if isinstance(col_fecha_raw, list) else col_fecha_raw
+
+
+def _opciones(col):
+    """Devuelve valores únicos no nulos de una columna, o lista vacía si no existe."""
+    if not col or col not in df_full.columns:
+        return []
+    return sorted(df_full[col].dropna().unique().tolist())
+
+
+c1, c2 = st.columns(2)
+with c1:
+    sel_sci  = st.multiselect("Nombre científico", _opciones(col_sci),
+                               disabled=not col_sci)
+    sel_pais = st.multiselect("País",              _opciones(col_pais),
+                               disabled=not col_pais)
+    sel_prov = st.multiselect("Provincia",         _opciones(col_prov),
+                               disabled=not (col_prov and col_prov in df_full.columns))
+
+with c2:
+    obs_deshabilitado = not (col_obs and col_obs in df_full.columns)
+    txt_obs = st.text_input("Observador (substring)", disabled=obs_deshabilitado)
+
+    rango_disp = bool(col_fecha and col_fecha in df_full.columns)
+    if rango_disp:
+        fecha_desde = st.date_input("Fecha desde", value=date(2000, 1, 1), key="fecha_desde")
+        fecha_hasta = st.date_input("Fecha hasta", value=date.today(),      key="fecha_hasta")
+    else:
+        st.info("Este dataset no tiene columna de fecha disponible.")
+        fecha_desde = fecha_hasta = None
+
+# --- Aplicar todos los filtros vía buscar_en_dataframe ---
+filtros_isin = {}
+if sel_sci:                      filtros_isin[col_sci]  = sel_sci
+if sel_pais:                     filtros_isin[col_pais] = sel_pais
+if sel_prov and col_prov:        filtros_isin[col_prov] = sel_prov
+
+filtros_substring = {}
+if txt_obs and col_obs:          filtros_substring[col_obs] = txt_obs
+
 df = buscar_en_dataframe(
     df_full,
     dataset=dataset_name,
     texto_libre=(col_seleccionada, texto_buscado) if texto_buscado else None,
+    isin=filtros_isin or None,
+    substring=filtros_substring or None,
+    rango_fecha=(col_fecha, fecha_desde, fecha_hasta) if rango_disp else None,
 )
 
 st.markdown(f"**{len(df):,} registros encontrados**")
