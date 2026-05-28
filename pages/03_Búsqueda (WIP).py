@@ -90,9 +90,9 @@ df = buscar_en_dataframe(
     rango_fecha=(col_fecha, fecha_desde, fecha_hasta) if rango_disp else None,
 )
 
-# --- Ejercicio 2.C — columnas relevantes ---
-# Criterio: ID + nombre científico + ubicación (país/provincia) + observador +
-# fecha primaria + nivel taxonómico (taxonRank, family, genus).
+# --- Ejercicio 2.C ---
+# Columnas a mostrar: ID + nombre científico + ubicación (país/provincia) +
+# observador + fecha primaria + nivel taxonómico (taxonRank, family, genus).
 # Se excluyen coordenadas (reservadas para el mapa en P4) y taxonomía alta
 # (kingdom, phylum, class, order) que no aportan valor en una búsqueda puntual.
 _CANDIDATE_DISPLAY = [
@@ -109,4 +109,38 @@ _CANDIDATE_DISPLAY = [
 display_cols = [c for c in _CANDIDATE_DISPLAY if c and c in df.columns]
 
 st.markdown(f"**{len(df):,} registros encontrados**")
-st.dataframe(df[display_cols], use_container_width=True, hide_index=True)
+
+PAGE_SIZE = 50
+page_key  = f"busqueda_pagina_{dataset_name}"
+total_key = f"busqueda_total_{dataset_name}"
+
+if page_key not in st.session_state:
+    st.session_state[page_key] = 0
+
+# Volver a la primera página cuando cambian los resultados del filtro
+if st.session_state.get(total_key) != len(df):
+    st.session_state[page_key] = 0
+    st.session_state[total_key] = len(df)
+
+pagina        = st.session_state[page_key]
+total_paginas = max(1, (len(df) + PAGE_SIZE - 1) // PAGE_SIZE)
+inicio        = pagina * PAGE_SIZE
+fin           = inicio + PAGE_SIZE
+
+bc1, bc2, bc3 = st.columns([1, 4, 1])
+with bc1:
+    if st.button("← Anterior", disabled=(pagina == 0)):
+        st.session_state[page_key] -= 1
+        st.rerun()
+with bc2:
+    st.caption(f"Página {pagina + 1} de {total_paginas}")
+with bc3:
+    if st.button("Siguiente →", disabled=(pagina >= total_paginas - 1)):
+        st.session_state[page_key] += 1
+        st.rerun()
+
+st.dataframe(
+    df[display_cols].iloc[inicio:fin].reset_index(drop=True),
+    use_container_width=True,
+    hide_index=True,
+)
