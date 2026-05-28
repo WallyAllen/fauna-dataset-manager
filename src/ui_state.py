@@ -44,9 +44,10 @@ def get_current_dataset():
         # NOTA: PReguntar si es necesario hacer display, porque ya está en el selectbox
 
         st.info(f'**DATASET ACTUAL:** {selected_dataset}')
-
-        # PENDIENTE: Ejercicio 1.C, parte 2. Cantidad de registros del dataset.
-        # NO tenemos archivos en processed_datasets/ como para llegar a esto. 
+        
+        # PENDING: Reworkear los processed para no tener tantas observaciones
+        df = load_dataframe(selected_dataset)
+        st.metric('**CANTIDAD DE FILAS:**', len(df))
 
         st.caption(f'Seleccionado el {st.session_state[SELECTION_TIME_KEY]}')
 
