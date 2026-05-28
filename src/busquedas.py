@@ -2,6 +2,7 @@ import csv
 import os
 from datetime import datetime
 import pycountry
+import pandas as pd
 from src import validaciones
 from src.log_operaciones import log
 from src.dataset_config import TRADUCTOR_DATASETS, get_dataset_config
@@ -242,7 +243,7 @@ def actualizar_registros(ruta_archivo, ruta_salida, identificador, columnaID,
         if os.path.exists(ruta_temporal):
             os.remove(ruta_temporal)
         afectados = 0
-    except Exception as e: # "Exception as e" tiene como funcion notificar el tipo de error 
+    except Exception as e: # "Exception as e" tiene como funcion notificar el tipo de error
         print(f"Se produjo un error al procesar el archivo: {e}")
         if dataset is not None:
             log(dataset, "UPDATE", 0, status="ERROR")
@@ -251,3 +252,86 @@ def actualizar_registros(ruta_archivo, ruta_salida, identificador, columnaID,
         raise
 
     return afectados
+
+
+def _resolver_columna(clave, df, config):
+    """
+    Traduce una clave (semántica o real) a nombre de columna y verifica
+    que exista en el DataFrame. Devuelve None si no aplica (clave None,
+    columna ausente).
+    """
+    if not clave:
+        return None
+    real = _traducir_clave_unica(clave, config) if config else clave
+    if real is None or real not in df.columns:
+        return None
+    return real
+
+
+def buscar_en_dataframe(df, dataset=None, texto_libre=None,
+                        isin=None, substring=None, rango_fecha=None):
+    """
+    Filtra un DataFrame con filtros combinables (intersección lógica).
+    Versión pandas de buscar_registros, pensada para la UI Streamlit (P3).
+
+    Parámetros (todos opcionales):
+    - texto_libre: tupla (columna, texto) — substring case-insensitive
+                   en la columna dada (Ejercicio 2.A).
+    - substring:   dict {clave: texto} — substring case-insensitive
+                   (ej. observador en 2.B).
+    - isin:        dict {clave: [valores]} — pertenencia
+                   (ej. scientificName, país, provincia en 2.B).
+    - rango_fecha: tupla (clave, desde, hasta) — fechas entre [desde, hasta]
+                   inclusive. desde/hasta pueden ser date o None.
+
+    Las claves pueden ser semánticas (TRADUCTOR_DATASETS) o nombres reales.
+    Si la columna no existe en el df, el filtro se ignora silenciosamente.
+    Las filas con NaN en la columna filtrada también se descartan.
+    """
+    config = get_dataset_config(dataset) if dataset is not None else None
+    resultado = df.copy()
+
+    if texto_libre:
+        col_raw, texto = texto_libre
+        if texto:
+            col = _resolver_columna(col_raw, resultado, config)
+            if col is not None:
+                resultado = resultado[
+                    resultado[col].astype(str).str.contains(texto, case=False, na=False)
+                ]
+
+    if substring:
+        for clave, texto in substring.items():
+            if not texto:
+                continue
+            col = _resolver_columna(clave, resultado, config)
+            if col is None:
+                continue
+            resultado = resultado.dropna(subset=[col])
+            resultado = resultado[
+                resultado[col].astype(str).str.contains(texto, case=False, na=False)
+            ]
+
+    if isin:
+        for clave, valores in isin.items():
+            if not valores:
+                continue
+            col = _resolver_columna(clave, resultado, config)
+            if col is None:
+                continue
+            resultado = resultado.dropna(subset=[col])
+            resultado = resultado[resultado[col].isin(valores)]
+
+    if rango_fecha:
+        clave, desde, hasta = rango_fecha
+        col = _resolver_columna(clave, resultado, config)
+        if col is not None and (desde is not None or hasta is not None):
+            fechas = pd.to_datetime(resultado[col], errors='coerce')
+            mascara = fechas.notna()
+            if desde is not None:
+                mascara &= (fechas >= pd.Timestamp(desde))
+            if hasta is not None:
+                mascara &= (fechas <= pd.Timestamp(hasta))
+            resultado = resultado[mascara]
+
+    return resultado

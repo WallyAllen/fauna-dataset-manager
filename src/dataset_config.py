@@ -24,6 +24,8 @@ TRADUCTOR_DATASETS = {
         'pais': 'countryCode',
         'tipo_pais': 'alpha_2',
         'coordenada_rango': '',
+        'observador': 'recordedBy',
+        'provincia': 'stateProvince',
         'taxonomica': [
             'scientificName', 'kingdom', 'phylum',
             'class', 'order', 'family', 'genus',
@@ -39,6 +41,8 @@ TRADUCTOR_DATASETS = {
         'pais': 'countryCode',
         'tipo_pais': 'alpha_2',
         'coordenada_rango': 'coordinateUncertaintyInMeters',
+        'observador': 'recordedBy',
+        'provincia': 'stateProvince',
         'taxonomica': [
             'scientificName', 'taxonID',
             'taxonRank', 'kingdom', 'phylum',
@@ -54,6 +58,8 @@ TRADUCTOR_DATASETS = {
         'pais': 'country',
         'tipo_pais': 'nombre',
         'coordenada_rango': '',
+        'observador': 'recordedBy',
+        'provincia': None,
         'taxonomica': [
             'scientificName', 'specificEpithet', 'infraspecificEpithet',
             'taxonRank', 'kingdom', 'higherClassification',
