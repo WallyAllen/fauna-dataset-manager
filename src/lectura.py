@@ -1,7 +1,7 @@
 import csv
 from pathlib import Path
 import pandas as pd
-from src.dataset_config import TRADUCTOR_DATASETS, get_dataset_filepath
+from src.dataset_config import get_dataset_filepath, get_dataset_config
 
 
 def load_dataframe(dataset_name, filepath=None, encoding='utf-8'):
@@ -12,16 +12,12 @@ def load_dataframe(dataset_name, filepath=None, encoding='utf-8'):
     Si no se pasa filepath, usa el archivo de processed_datasets/ de la etapa 1.
     Respeta delimitador y encoding del traductor.
     """
-    if dataset_name not in TRADUCTOR_DATASETS:
-        raise ValueError(
-            f"Dataset '{dataset_name}' no reconocido. "
-            f"Opciones válidas: {list(TRADUCTOR_DATASETS.keys())}"
-        )
+
+    config = get_dataset_config(dataset_name)
 
     if filepath is None:
         filepath = get_dataset_filepath(dataset_name)
 
-    config = TRADUCTOR_DATASETS[dataset_name]
     delimiter = config['delimitador']
     dataset_encoding = config.get('encoding', encoding)
 
