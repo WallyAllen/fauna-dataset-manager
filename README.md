@@ -84,6 +84,28 @@ Se recomienda ejecutar los notebooks en el orden de los ejercicios, oséase:
 
 ---
 
+## **Generación de Datasets Procesados**
+
+Antes de iniciar la aplicación Streamlit es necesario generar los archivos limpios en `processed_datasets/`. Este paso aplica las validaciones de la Parte 1 sobre los datasets crudos y produce los archivos que usa la app.
+
+> **Nota:** `raw_datasets/` debe tener los datasets descargados antes de ejecutar este paso. El proceso puede tardar varios minutos dependiendo del tamaño del dataset (iNaturalist es el más pesado).
+
+Para generarlos, ejecutá desde la raíz del proyecto:
+
+```bash
+python generar_processed.py
+```
+
+El script procesará los tres datasets en orden y mostrará un resumen de registros analizados, eliminados y conservados por cada uno. Una vez finalizado, los siguientes archivos estarán disponibles:
+
+- `processed_datasets/iadiza_insertado.txt`
+- `processed_datasets/inaturalist_insertado.csv`
+- `processed_datasets/xenocanto_insertado.txt`
+
+Si un dataset crudo no se encuentra en `raw_datasets/`, el script lo informa y continúa con los demás.
+
+---
+
 ## **Interfaz Streamlit**
 
 La aplicación web se inicia desde `01_Inicio.py` y está construida con **Streamlit**. Este archivo presenta la página de bienvenida de Darwinite y habilita la navegación por las páginas adicionales a través del menú lateral.
