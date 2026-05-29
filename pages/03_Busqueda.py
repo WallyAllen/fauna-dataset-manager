@@ -144,3 +144,15 @@ st.dataframe(
     use_container_width=True,
     hide_index=True,
 )
+
+id_col = config['id']
+ids_pagina = df[id_col].iloc[inicio:fin].astype(str).tolist()
+id_seleccionado = st.selectbox("Ver detalle de un registro", options=["—"] + ids_pagina)
+if id_seleccionado != "—":
+    fila = df[df[id_col].astype(str) == id_seleccionado].iloc[0]
+    with st.expander(f"Detalle del registro {id_seleccionado}", expanded=True):
+        st.dataframe(
+            fila.to_frame("Valor").reset_index().rename(columns={"index": "Campo"}),
+            use_container_width=True,
+            hide_index=True,
+        )
