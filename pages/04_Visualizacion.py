@@ -26,62 +26,134 @@ except Exception as e:
     st.error(f"Error al cargar el dataset: {e}")
     st.stop()
 
-# 3. Lógica del Ejercicio 3.A
-# Identificamos las columnas según el traductor
+# ---------------------------------------------------------
+# Ejercicio 3.A: Gráfico de Barras (País / Provincia)
+# ---------------------------------------------------------
+st.header("📍 Distribución Geográfica")
+
 col_pais = config.get('pais')
 col_provincia = config.get('provincia')
 
-# Contamos registros por país para decidir la granularidad del gráfico
-# Eliminamos nulos para la lógica de decisión
 paises_presentes = df[col_pais].dropna().unique()
 
 if len(paises_presentes) > 1:
-    # Caso: Más de un país
-    col_a_graficar = col_pais
-    titulo_grafico = "Cantidad de registros por País"
-    label_slider = "países"
+    col_a_graficar_geo = col_pais
+    titulo_geo = "Cantidad de registros por País"
+    label_slider_geo = "países"
 else:
-    # Caso: Un solo país (o ninguno declarado, tomamos el primero si existe)
-    # Buscamos provincia, si no existe o es None en config, buscamos locality
     if col_provincia and col_provincia in df.columns:
-        col_a_graficar = col_provincia
+        col_a_graficar_geo = col_provincia
     elif 'locality' in df.columns:
-        col_a_graficar = 'locality'
+        col_a_graficar_geo = 'locality'
     elif 'verbatimLocality' in df.columns:
-        col_a_graficar = 'verbatimLocality'
+        col_a_graficar_geo = 'verbatimLocality'
     else:
-        st.warning("No se encontraron columnas de ubicación (provincia/localidad) para este dataset.")
-        st.stop()
+        col_a_graficar_geo = None
     
     nombre_pais = paises_presentes[0] if len(paises_presentes) > 0 else "el dataset"
-    titulo_grafico = f"Cantidad de registros en {nombre_pais} (por Provincia/Localidad)"
-    label_slider = "ubicaciones"
+    titulo_geo = f"Cantidad de registros en {nombre_pais} (por Provincia/Localidad)"
+    label_slider_geo = "ubicaciones"
 
-# 4. Renderizado del componente visual
-st.subheader(titulo_grafico)
-
-# Calculamos las frecuencias
-frecuencias = df[col_a_graficar].value_counts()
-
-if frecuencias.empty:
-    st.info("No hay datos suficientes para generar el gráfico.")
-else:
-    # Slider para elegir cuántos mostrar (N más frecuentes)
-    n_total = len(frecuencias)
-    n_mostrar = st.slider(
-        f"Seleccioná cuántos {label_slider} mostrar",
-        min_value=1,
-        max_value=min(n_total, 50),
-        value=min(n_total, 10),
-        help="Muestra los registros con mayor cantidad de apariciones."
-    )
-
-    # Filtrar y graficar
-    datos_grafico = frecuencias.head(n_mostrar)
+if col_a_graficar_geo:
+    st.subheader(titulo_geo)
+    frecuencias_geo = df[col_a_graficar_geo].value_counts()
     
-    # Usamos st.bar_chart para una integración rápida y estética con Streamlit
-    st.bar_chart(datos_grafico)
+    if not frecuencias_geo.empty:
+        n_mostrar_geo = st.slider(
+            f"Seleccioná cuántos {label_slider_geo} mostrar",
+            min_value=1,
+            max_value=min(len(frecuencias_geo), 50),
+            value=min(len(frecuencias_geo), 10),
+            key="slider_3a"
+        )
+        st.bar_chart(frecuencias_geo.head(n_mostrar_geo))
+    else:
+        st.info("No hay datos de ubicación para graficar.")
+else:
+    st.warning("No se encontraron columnas de ubicación compatibles.")
 
-    # Información adicional
-    with st.expander("Ver datos tabulares"):
-        st.dataframe(datos_grafico, use_container_width=True)
+st.divider()
+
+# ---------------------------------------------------------
+# Ejercicio 3.B: Gráfico de Líneas (Evolución Temporal)
+# ---------------------------------------------------------
+st.header("📅 Evolución Temporal")
+
+col_fecha = 'eventDate'
+
+if col_fecha in df.columns:
+    st.subheader("Cantidad de registros por Año")
+    
+    fechas_limpias = pd.to_datetime(df[col_fecha], errors='coerce')
+    registros_excluidos = fechas_limpias.isna().sum()
+    anios = fechas_limpias.dropna().dt.year.astype(int)
+    
+    if not anios.empty:
+        conteo_por_anio = anios.value_counts().sort_index()
+        
+        if registros_excluidos > 0:
+            st.warning(f"⚠️ Se excluyeron **{registros_excluidos}** registros debido a fechas nulas o formatos inconsistentes.")
+        else:
+            st.success("✅ Todos los registros tienen fechas válidas.")
+
+        st.line_chart(conteo_por_anio)
+        
+        with st.expander("Ver detalle por año"):
+            st.table(conteo_por_anio.rename("Cantidad de Registros").rename_axis("Año"))
+    else:
+        st.info("No hay registros con fechas válidas para mostrar la evolución temporal.")
+else:
+    st.error(f"La columna '{col_fecha}' no existe en este dataset.")
+
+st.divider()
+
+# ---------------------------------------------------------
+# Ejercicio 3.C: Distribución Taxonómica
+# ---------------------------------------------------------
+st.header("🧬 Análisis Taxonómico")
+
+# Opciones de nivel taxonómico según la consigna
+opciones_taxo = {
+    "Clase": "class",
+    "Orden": "order",
+    "Familia": "family"
+}
+
+st.subheader("Distribución por nivel taxonómico")
+
+# Selector para que el usuario elija el nivel (Requisito 3.C)
+nivel_seleccionado = st.selectbox(
+    "Seleccioná el nivel taxonómico a visualizar",
+    options=list(opciones_taxo.keys()),
+    index=0,
+    help="Elige qué nivel de la jerarquía taxonómica quieres analizar."
+)
+
+# Obtenemos el nombre real de la columna en el DataFrame
+col_taxo = opciones_taxo[nivel_seleccionado]
+
+if col_taxo in df.columns:
+    # Calculamos frecuencias ignorando nulos
+    frecuencias_taxo = df[col_taxo].value_counts()
+    
+    if not frecuencias_taxo.empty:
+        # Mostramos un slider para no saturar el gráfico si hay muchos géneros/familias
+        n_mostrar_taxo = st.slider(
+            f"Mostrar los {nivel_seleccionado.lower()} más frecuentes",
+            min_value=1,
+            max_value=min(len(frecuencias_taxo), 30),
+            value=min(len(frecuencias_taxo), 10),
+            key="slider_3c"
+        )
+        
+        # Graficamos
+        st.bar_chart(frecuencias_taxo.head(n_mostrar_taxo))
+        
+        with st.expander(f"Ver lista completa de {nivel_seleccionado}"):
+            st.dataframe(frecuencias_taxo, use_container_width=True)
+    else:
+        st.info(f"No hay datos disponibles para el nivel: {nivel_seleccionado}.")
+else:
+    st.error(f"La columna '{col_taxo}' no fue encontrada en este dataset.")
+
+st.divider()
