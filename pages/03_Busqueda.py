@@ -110,6 +110,15 @@ display_cols = [c for c in _CANDIDATE_DISPLAY if c and c in df.columns]
 
 st.markdown(f"**{len(df):,} registros encontrados**")
 
+# --- Ejercicio 2.D ---
+nombre_archivo = f"{dataset_name}_busqueda_{date.today().strftime('%Y-%m-%d')}.csv"
+st.download_button(
+    label="Exportar resultados (CSV)",
+    data=df[display_cols].to_csv(index=False).encode("utf-8"),
+    file_name=nombre_archivo,
+    mime="text/csv",
+)
+
 PAGE_SIZE = 50
 page_key  = f"busqueda_pagina_{dataset_name}"
 total_key = f"busqueda_total_{dataset_name}"
@@ -144,3 +153,15 @@ st.dataframe(
     use_container_width=True,
     hide_index=True,
 )
+
+id_col = config['id']
+ids_pagina = df[id_col].iloc[inicio:fin].astype(str).tolist()
+id_seleccionado = st.selectbox("Ver detalle de un registro", options=["—"] + ids_pagina)
+if id_seleccionado != "—":
+    fila = df[df[id_col].astype(str) == id_seleccionado].iloc[0]
+    with st.expander(f"Detalle del registro {id_seleccionado}", expanded=True):
+        st.dataframe(
+            fila.to_frame("Valor").reset_index().rename(columns={"index": "Campo"}),
+            use_container_width=True,
+            hide_index=True,
+        )
