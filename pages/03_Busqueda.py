@@ -110,6 +110,15 @@ display_cols = [c for c in _CANDIDATE_DISPLAY if c and c in df.columns]
 
 st.markdown(f"**{len(df):,} registros encontrados**")
 
+# --- Ejercicio 2.D ---
+nombre_archivo = f"{dataset_name}_busqueda_{date.today().strftime('%Y-%m-%d')}.csv"
+st.download_button(
+    label="Exportar resultados (CSV)",
+    data=df[display_cols].to_csv(index=False).encode("utf-8"),
+    file_name=nombre_archivo,
+    mime="text/csv",
+)
+
 PAGE_SIZE = 50
 page_key  = f"busqueda_pagina_{dataset_name}"
 total_key = f"busqueda_total_{dataset_name}"
