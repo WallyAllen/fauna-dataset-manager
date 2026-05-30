@@ -2,8 +2,10 @@ import streamlit as st
 import pandas as pd
 from src.ui_state import get_current_dataset
 from src.lectura import load_dataframe, get_null_percentage
-from src.dataset_config import get_dataset_config, get_dataset_filepath
+from src.dataset_config import get_dataset_config, get_dataset_filepath, DATASET_PROCESSED_FILES
+from src.validaciones import validar_coordenadas, validar_fechas
 import altair as alt
+import os
 
 st.set_page_config(
     page_title="Visualización",
@@ -206,3 +208,77 @@ else:
     st.info("No se pudo calcular la completitud de las columnas.")
 
 st.divider()
+
+# ---------------------------------------------------------
+# Ejercicio 3.E: Tabla Comparativa de Datasets
+# ---------------------------------------------------------
+st.header("🔄 Comparativa entre Datasets")
+
+# Obtenemos la lista de datasets que realmente existen en processed_datasets/
+datasets_existentes = []
+for d_name in DATASET_PROCESSED_FILES.keys():
+    try:
+        path = get_dataset_filepath(d_name)
+        if path.exists():
+            datasets_existentes.append(d_name)
+    except:
+        continue
+
+if len(datasets_existentes) > 1:
+    st.subheader("Resumen estadístico comparado")
+    
+    data_comparativa = []
+    
+    with st.spinner("Generando comparativa..."):
+        for d_name in datasets_existentes:
+            try:
+                # Cargamos configuración y ruta
+                cfg = get_dataset_config(d_name)
+                path = get_dataset_filepath(d_name)
+                delim = cfg['delimitador']
+                enc = cfg.get('encoding', 'utf-8')
+                
+                # 1. Cantidad de registros (load_dataframe es pesado pero seguro aquí)
+                temp_df = load_dataframe(d_name)
+                cant_registros = len(temp_df)
+                
+                # 2. Porcentaje registros con coordenadas válidas (Requisito 3.E)
+                res_coor = validar_coordenadas(d_name, str(path))
+                err_coor = res_coor['cantidad_invalidos']
+                porc_coor_val = round(((cant_registros - err_coor) / cant_registros) * 100, 2) if cant_registros > 0 else 0
+                
+                # 3. Porcentaje registros con fecha válida (Requisito 3.E)
+                res_fecha = validar_fechas(d_name, str(path))
+                err_fecha = res_fecha['anios_posteriores'] + res_fecha['fechas_invalidas']
+                porc_fecha_val = round(((cant_registros - err_fecha) / cant_registros) * 100, 2) if cant_registros > 0 else 0
+                
+                # 4. Porcentaje de campos completados en promedio (Requisito 3.E)
+                dict_nulos = get_null_percentage(str(path), encoding=enc, delimiter=delim)
+                avg_completitud = round(sum(100 - v for v in dict_nulos.values()) / len(dict_nulos), 2)
+                
+                data_comparativa.append({
+                    "Dataset": d_name.upper(),
+                    "Registros": cant_registros,
+                    "% Coordenadas Válidas": porc_coor_val,
+                    "% Fechas Válidas": porc_fecha_val,
+                    "% Completitud Promedio": avg_completitud
+                })
+            except Exception as e:
+                st.error(f"Error procesando '{d_name}': {e}")
+
+    df_comp_final = pd.DataFrame(data_comparativa)
+    
+    # Mostramos la tabla (Requisito 3.E)
+    st.dataframe(
+        df_comp_final,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Registros": st.column_config.NumberColumn(format="%d"),
+            "% Coordenadas Válidas": st.column_config.ProgressColumn(format="%.2f%%", min_value=0, max_value=100),
+            "% Fechas Válidas": st.column_config.ProgressColumn(format="%.2f%%", min_value=0, max_value=100),
+            "% Completitud Promedio": st.column_config.ProgressColumn(format="%.2f%%", min_value=0, max_value=100),
+        }
+    )
+else:
+    st.info("Se requiere más de un dataset en `processed_datasets/` para mostrar la comparativa.")
