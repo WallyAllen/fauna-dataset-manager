@@ -37,27 +37,32 @@ st.header("📍 Distribución Geográfica")
 col_pais = config.get('pais')
 col_provincia = config.get('provincia')
 
-paises_presentes = df[col_pais].dropna().unique()
-
-if len(paises_presentes) > 1:
-    col_a_graficar_geo = col_pais
-    titulo_geo = "Cantidad de registros por País"
-    label_slider_geo = "países"
-else:
-    if col_provincia and col_provincia in df.columns:
-        col_a_graficar_geo = col_provincia
-    elif 'locality' in df.columns:
-        col_a_graficar_geo = 'locality'
-    elif 'verbatimLocality' in df.columns:
-        col_a_graficar_geo = 'verbatimLocality'
-    else:
-        col_a_graficar_geo = None
+# Verificamos si la columna de país existe en el DF
+if col_pais and col_pais in df.columns:
+    paises_presentes = df[col_pais].dropna().unique()
     
-    nombre_pais = paises_presentes[0] if len(paises_presentes) > 0 else "el dataset"
-    titulo_geo = f"Cantidad de registros en {nombre_pais} (por Provincia/Localidad)"
-    label_slider_geo = "ubicaciones"
+    if len(paises_presentes) > 1:
+        col_a_graficar_geo = col_pais
+        titulo_geo = "Cantidad de registros por País"
+        label_slider_geo = "países"
+    else:
+        if col_provincia and col_provincia in df.columns:
+            col_a_graficar_geo = col_provincia
+        elif 'locality' in df.columns:
+            col_a_graficar_geo = 'locality'
+        elif 'verbatimLocality' in df.columns:
+            col_a_graficar_geo = 'verbatimLocality'
+        else:
+            col_a_graficar_geo = None
+        
+        nombre_pais = paises_presentes[0] if len(paises_presentes) > 0 else "el dataset"
+        titulo_geo = f"Cantidad de registros en {nombre_pais} (por Provincia/Localidad)"
+        label_slider_geo = "ubicaciones"
+else:
+    col_a_graficar_geo = None
+    st.warning(f"La columna de país '{col_pais}' no se encontró en el dataset.")
 
-if col_a_graficar_geo:
+if col_a_graficar_geo and col_a_graficar_geo in df.columns:
     st.subheader(titulo_geo)
     frecuencias_geo = df[col_a_graficar_geo].value_counts()
     
