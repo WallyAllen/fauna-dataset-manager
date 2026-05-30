@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
 from src.ui_state import get_current_dataset
-from src.lectura import load_dataframe
-from src.dataset_config import get_dataset_config
+from src.lectura import load_dataframe, get_null_percentage
+from src.dataset_config import get_dataset_config, get_dataset_filepath
+import altair as alt
 
 st.set_page_config(
     page_title="Visualización",
@@ -155,5 +156,53 @@ if col_taxo in df.columns:
         st.info(f"No hay datos disponibles para el nivel: {nivel_seleccionado}.")
 else:
     st.error(f"La columna '{col_taxo}' no fue encontrada en este dataset.")
+
+st.divider()
+
+# ---------------------------------------------------------
+# Ejercicio 3.D: Completitud de los Datos
+# ---------------------------------------------------------
+st.header("📊 Calidad de Datos (Completitud)")
+
+with st.spinner("Analizando completitud..."):
+    # Obtenemos la ruta del archivo y configuración
+    filepath = get_dataset_filepath(dataset_name)
+    encoding = config.get('encoding', 'utf-8')
+    delimiter = config.get('delimitador', ',')
+    
+    # Reutilizamos la función del Ejercicio 2.F (Requisito 3.D)
+    dict_nulos = get_null_percentage(filepath, encoding=encoding, delimiter=delimiter)
+    
+    # Convertimos a completitud (100 - nulos)
+    dict_completitud = {col: 100 - val for col, val in dict_nulos.items()}
+    
+    # Creamos DataFrame para graficar
+    df_comp = pd.DataFrame(list(dict_completitud.items()), columns=['Columna', 'Porcentaje'])
+    df_comp = df_comp.sort_values(by='Porcentaje', ascending=False)
+
+if not df_comp.empty:
+    st.subheader("Porcentaje de registros no nulos por columna")
+    
+    # Usamos Altair para gráfico de barras horizontales (Requisito 3.D)
+    chart = alt.Chart(df_comp).mark_bar().encode(
+        x=alt.X('Porcentaje:Q', title='Completitud (%)', scale=alt.Scale(domain=[0, 100])),
+        y=alt.Y('Columna:N', sort='-x', title='Columna'),
+        color=alt.Color('Porcentaje:Q', scale=alt.Scale(scheme='greens'), legend=None),
+        tooltip=['Columna', 'Porcentaje']
+    ).properties(
+        width='container',
+        height=max(300, len(df_comp) * 20)  # Ajuste dinámico de altura según cantidad de columnas
+    )
+    
+    st.altair_chart(chart, use_container_width=True)
+    
+    with st.expander("Ver tabla de completitud"):
+        st.dataframe(
+            df_comp.rename(columns={'Porcentaje': '% Completitud'}), 
+            use_container_width=True, 
+            hide_index=True
+        )
+else:
+    st.info("No se pudo calcular la completitud de las columnas.")
 
 st.divider()
