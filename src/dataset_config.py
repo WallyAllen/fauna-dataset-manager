@@ -50,7 +50,7 @@ TRADUCTOR_DATASETS = {
         ],
     },
     'xenocanto': {
-        'delimitador': ',',
+        'delimitador': '\t',
         'latitud': 'latitudeDecimal',
         'longitud': 'longitudeDecimal',
         'fecha': ['eventDate'],
@@ -63,7 +63,7 @@ TRADUCTOR_DATASETS = {
         'taxonomica': [
             'scientificName', 'specificEpithet', 'infraspecificEpithet',
             'taxonRank', 'kingdom', 'higherClassification',
-            'family', 'genus', 'nomenclaturalCode',
+            'class', 'order', 'family', 'genus', 'nomenclaturalCode',
             'vernacularName', 'identificationRemarks',
         ],
     },
