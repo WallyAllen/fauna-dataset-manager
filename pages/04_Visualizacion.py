@@ -13,6 +13,42 @@ st.set_page_config(
     layout="wide",
 )
 
+# ---------------------------------------------------------
+# Funciones Optimizadas con Cache
+# ---------------------------------------------------------
+
+@st.cache_data
+def get_cached_dataframe(name):
+    return load_dataframe(name)
+
+@st.cache_data
+def get_cached_metrics(d_name, path, delim, enc):
+    # Cantidad de registros
+    temp_df = load_dataframe(d_name)
+    cant_registros = len(temp_df)
+    
+    # Porcentaje registros con coordenadas válidas
+    res_coor = validar_coordenadas(d_name, str(path))
+    err_coor = res_coor['cantidad_invalidos']
+    porc_coor_val = round(((cant_registros - err_coor) / cant_registros) * 100, 2) if cant_registros > 0 else 0
+    
+    # Porcentaje registros con fecha válida
+    res_fecha = validar_fechas(d_name, str(path))
+    err_fecha = res_fecha['anios_posteriores'] + res_fecha['fechas_invalidas']
+    porc_fecha_val = round(((cant_registros - err_fecha) / cant_registros) * 100, 2) if cant_registros > 0 else 0
+    
+    # Porcentaje de campos completados en promedio
+    dict_nulos = get_null_percentage(str(path), encoding=enc, delimiter=delim)
+    avg_completitud = round(sum(100 - v for v in dict_nulos.values()) / len(dict_nulos), 2)
+    
+    return {
+        "Dataset": d_name.upper(),
+        "Registros": cant_registros,
+        "% Coordenadas Válidas": porc_coor_val,
+        "% Fechas Válidas": porc_fecha_val,
+        "% Completitud Promedio": avg_completitud
+    }
+
 # 1. Obtener el dataset seleccionado en el sidebar
 dataset_name = get_current_dataset()
 
@@ -23,7 +59,7 @@ st.divider()
 # 2. Cargar el DataFrame y su configuración específica
 try:
     with st.spinner("Cargando datos..."):
-        df = load_dataframe(dataset_name)
+        df = get_cached_dataframe(dataset_name)
         config = get_dataset_config(dataset_name)
 except Exception as e:
     st.error(f"Error al cargar el dataset: {e}")
@@ -53,10 +89,11 @@ if col_pais and col_pais in df.columns:
         elif 'verbatimLocality' in df.columns:
             col_a_graficar_geo = 'verbatimLocality'
         else:
-            col_a_graficar_geo = None
+            # Si no hay sub-regiones, volvemos a usar el país para mostrar al menos un gráfico
+            col_a_graficar_geo = col_pais
         
         nombre_pais = paises_presentes[0] if len(paises_presentes) > 0 else "el dataset"
-        titulo_geo = f"Cantidad de registros en {nombre_pais} (por Provincia/Localidad)"
+        titulo_geo = f"Cantidad de registros en {nombre_pais}"
         label_slider_geo = "ubicaciones"
 else:
     col_a_graficar_geo = None
@@ -67,13 +104,18 @@ if col_a_graficar_geo and col_a_graficar_geo in df.columns:
     frecuencias_geo = df[col_a_graficar_geo].value_counts()
     
     if not frecuencias_geo.empty:
-        n_mostrar_geo = st.slider(
-            f"Seleccioná cuántos {label_slider_geo} mostrar",
-            min_value=1,
-            max_value=min(len(frecuencias_geo), 50),
-            value=min(len(frecuencias_geo), 10),
-            key="slider_3a"
-        )
+        # Si hay más de un elemento, permitimos elegir cuántos mostrar
+        if len(frecuencias_geo) > 1:
+            n_mostrar_geo = st.slider(
+                f"Seleccioná cuántos {label_slider_geo} mostrar",
+                min_value=1,
+                max_value=min(len(frecuencias_geo), 50),
+                value=min(len(frecuencias_geo), 10),
+                key="slider_3a"
+            )
+        else:
+            n_mostrar_geo = 1
+            
         st.bar_chart(frecuencias_geo.head(n_mostrar_geo))
     else:
         st.info("No hay datos de ubicación para graficar.")
@@ -145,14 +187,17 @@ if col_taxo in df.columns:
     frecuencias_taxo = df[col_taxo].value_counts()
     
     if not frecuencias_taxo.empty:
-        # Mostramos un slider para no saturar el gráfico si hay muchos géneros/familias
-        n_mostrar_taxo = st.slider(
-            f"Mostrar los {nivel_seleccionado.lower()} más frecuentes",
-            min_value=1,
-            max_value=min(len(frecuencias_taxo), 30),
-            value=min(len(frecuencias_taxo), 10),
-            key="slider_3c"
-        )
+        # Si hay más de un elemento, permitimos elegir cuántos mostrar
+        if len(frecuencias_taxo) > 1:
+            n_mostrar_taxo = st.slider(
+                f"Mostrar los {nivel_seleccionado.lower()} más frecuentes",
+                min_value=1,
+                max_value=min(len(frecuencias_taxo), 30),
+                value=min(len(frecuencias_taxo), 10),
+                key="slider_3c"
+            )
+        else:
+            n_mostrar_taxo = 1
         
         # Graficamos
         st.bar_chart(frecuencias_taxo.head(n_mostrar_taxo))
@@ -243,31 +288,9 @@ if len(datasets_existentes) > 1:
                 delim = cfg['delimitador']
                 enc = cfg.get('encoding', 'utf-8')
                 
-                # 1. Cantidad de registros (load_dataframe es pesado pero seguro aquí)
-                temp_df = load_dataframe(d_name)
-                cant_registros = len(temp_df)
-                
-                # 2. Porcentaje registros con coordenadas válidas (Requisito 3.E)
-                res_coor = validar_coordenadas(d_name, str(path))
-                err_coor = res_coor['cantidad_invalidos']
-                porc_coor_val = round(((cant_registros - err_coor) / cant_registros) * 100, 2) if cant_registros > 0 else 0
-                
-                # 3. Porcentaje registros con fecha válida (Requisito 3.E)
-                res_fecha = validar_fechas(d_name, str(path))
-                err_fecha = res_fecha['anios_posteriores'] + res_fecha['fechas_invalidas']
-                porc_fecha_val = round(((cant_registros - err_fecha) / cant_registros) * 100, 2) if cant_registros > 0 else 0
-                
-                # 4. Porcentaje de campos completados en promedio (Requisito 3.E)
-                dict_nulos = get_null_percentage(str(path), encoding=enc, delimiter=delim)
-                avg_completitud = round(sum(100 - v for v in dict_nulos.values()) / len(dict_nulos), 2)
-                
-                data_comparativa.append({
-                    "Dataset": d_name.upper(),
-                    "Registros": cant_registros,
-                    "% Coordenadas Válidas": porc_coor_val,
-                    "% Fechas Válidas": porc_fecha_val,
-                    "% Completitud Promedio": avg_completitud
-                })
+                # Usamos la función con caché (Requisito 3.E optimizado)
+                metricas = get_cached_metrics(d_name, str(path), delim, enc)
+                data_comparativa.append(metricas)
             except Exception as e:
                 st.error(f"Error procesando '{d_name}': {e}")
 
